@@ -1,0 +1,512 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		212001DC962AA9BED674DB72 /* GlintwakeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6321CDEF58811CE8CD35DD26 /* GlintwakeUITests.swift */; };
+		2177408B95DD85D082873941 /* String+Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 753E435EEF9B68A98162891A /* String+Localization.swift */; };
+		27F27AF1DC173D19A2419476 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7C3B88014377046578EB0DC /* ContentView.swift */; };
+		42B1F9FDE12703648205C3D7 /* Levels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85009BF6C994D32579910E8A /* Levels.swift */; };
+		47167825E6420CD0EF44FE11 /* GlintwakeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6286915C9B39B0D9B32F532 /* GlintwakeApp.swift */; };
+		474E8E2E2DA96893149A0D72 /* GameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 375F08F4D42DCDFD81B9A4E6 /* GameStore.swift */; };
+		4C68BA0AC95F7D907B2AB875 /* BoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29FB5BCFA966DE4E2C1E7A05 /* BoardView.swift */; };
+		D23A805DD47944484E8AB6A6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 46C5AF0857B577E7BA29E4C7 /* Assets.xcassets */; };
+		FB2AC735F4509AAA7445FFD8 /* Game.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94201AFAF8E56E25B3E80E34 /* Game.swift */; };
+		FD6BA0075623F1921CBDB884 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = A182284BF6916D2C76EF49D0 /* Localizable.strings */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		9BD42C13EE83021ECA5D64AA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 780CE3ABB24E936B96C986B2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 59AB3852B7A64534A07ECFC4;
+			remoteInfo = Glintwake;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		109825C5057FEA1627BDC8CD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		29FB5BCFA966DE4E2C1E7A05 /* BoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardView.swift; sourceTree = "<group>"; };
+		375F08F4D42DCDFD81B9A4E6 /* GameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStore.swift; sourceTree = "<group>"; };
+		46C5AF0857B577E7BA29E4C7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		6321CDEF58811CE8CD35DD26 /* GlintwakeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlintwakeUITests.swift; sourceTree = "<group>"; };
+		753E435EEF9B68A98162891A /* String+Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Localization.swift"; sourceTree = "<group>"; };
+		85009BF6C994D32579910E8A /* Levels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Levels.swift; sourceTree = "<group>"; };
+		94201AFAF8E56E25B3E80E34 /* Game.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Game.swift; sourceTree = "<group>"; };
+		B7C3B88014377046578EB0DC /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		BAD31CFD5865E9A1EF828C30 /* Glintwake.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Glintwake.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D6286915C9B39B0D9B32F532 /* GlintwakeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlintwakeApp.swift; sourceTree = "<group>"; };
+		E096BAD98F470602F28D94FA /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F17E8FAEB35DC9BB2573ACCE /* GlintwakeUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = GlintwakeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		016EB6860ECC5A81636B130B /* Assets */ = {
+			isa = PBXGroup;
+			children = (
+				46C5AF0857B577E7BA29E4C7 /* Assets.xcassets */,
+			);
+			path = Assets;
+			sourceTree = "<group>";
+		};
+		027977619815784669CB40E3 /* UITests */ = {
+			isa = PBXGroup;
+			children = (
+				6321CDEF58811CE8CD35DD26 /* GlintwakeUITests.swift */,
+			);
+			name = UITests;
+			path = Tests/UITests;
+			sourceTree = "<group>";
+		};
+		0AA93C5310AEFEA52DB28301 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A182284BF6916D2C76EF49D0 /* Localizable.strings */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		17C03404A716D05FDA9D03BF /* App */ = {
+			isa = PBXGroup;
+			children = (
+				29FB5BCFA966DE4E2C1E7A05 /* BoardView.swift */,
+				B7C3B88014377046578EB0DC /* ContentView.swift */,
+				375F08F4D42DCDFD81B9A4E6 /* GameStore.swift */,
+				D6286915C9B39B0D9B32F532 /* GlintwakeApp.swift */,
+				753E435EEF9B68A98162891A /* String+Localization.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		6E1E95EBF5C0CD7EB4D72B84 = {
+			isa = PBXGroup;
+			children = (
+				016EB6860ECC5A81636B130B /* Assets */,
+				0AA93C5310AEFEA52DB28301 /* Resources */,
+				F842544A2B3450512A8ECA4A /* Sources */,
+				027977619815784669CB40E3 /* UITests */,
+				D74C8156C6A81DC370CAF91A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D74C8156C6A81DC370CAF91A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BAD31CFD5865E9A1EF828C30 /* Glintwake.app */,
+				F17E8FAEB35DC9BB2573ACCE /* GlintwakeUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		EAC77E8A7877367AE9D84A2D /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				94201AFAF8E56E25B3E80E34 /* Game.swift */,
+				85009BF6C994D32579910E8A /* Levels.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		F842544A2B3450512A8ECA4A /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				17C03404A716D05FDA9D03BF /* App */,
+				EAC77E8A7877367AE9D84A2D /* Core */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		59AB3852B7A64534A07ECFC4 /* Glintwake */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8F86945C3F07621580A7B125 /* Build configuration list for PBXNativeTarget "Glintwake" */;
+			buildPhases = (
+				32C0FB5237A21DEC9DDB7AE6 /* Sources */,
+				FEE5EE75C50CB67B5EFA589F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Glintwake;
+			packageProductDependencies = (
+			);
+			productName = Glintwake;
+			productReference = BAD31CFD5865E9A1EF828C30 /* Glintwake.app */;
+			productType = "com.apple.product-type.application";
+		};
+		769B7A190D8813B4311D85B4 /* GlintwakeUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 237009F8C1529BCDF1B4B0D7 /* Build configuration list for PBXNativeTarget "GlintwakeUITests" */;
+			buildPhases = (
+				EBA69BBD9C53845DCE2DBEEF /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				528BAF33194C7CB59274CE2D /* PBXTargetDependency */,
+			);
+			name = GlintwakeUITests;
+			packageProductDependencies = (
+			);
+			productName = GlintwakeUITests;
+			productReference = F17E8FAEB35DC9BB2573ACCE /* GlintwakeUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		780CE3ABB24E936B96C986B2 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					59AB3852B7A64534A07ECFC4 = {
+						DevelopmentTeam = 3HG9ZBM8AV;
+						ProvisioningStyle = Automatic;
+					};
+					769B7A190D8813B4311D85B4 = {
+						DevelopmentTeam = 3HG9ZBM8AV;
+						ProvisioningStyle = Automatic;
+						TestTargetID = 59AB3852B7A64534A07ECFC4;
+					};
+				};
+			};
+			buildConfigurationList = C919BF88C09D44BE5E164C64 /* Build configuration list for PBXProject "Glintwake" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+				ru,
+			);
+			mainGroup = 6E1E95EBF5C0CD7EB4D72B84;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				59AB3852B7A64534A07ECFC4 /* Glintwake */,
+				769B7A190D8813B4311D85B4 /* GlintwakeUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FEE5EE75C50CB67B5EFA589F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D23A805DD47944484E8AB6A6 /* Assets.xcassets in Resources */,
+				FD6BA0075623F1921CBDB884 /* Localizable.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		32C0FB5237A21DEC9DDB7AE6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4C68BA0AC95F7D907B2AB875 /* BoardView.swift in Sources */,
+				27F27AF1DC173D19A2419476 /* ContentView.swift in Sources */,
+				FB2AC735F4509AAA7445FFD8 /* Game.swift in Sources */,
+				474E8E2E2DA96893149A0D72 /* GameStore.swift in Sources */,
+				47167825E6420CD0EF44FE11 /* GlintwakeApp.swift in Sources */,
+				42B1F9FDE12703648205C3D7 /* Levels.swift in Sources */,
+				2177408B95DD85D082873941 /* String+Localization.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EBA69BBD9C53845DCE2DBEEF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				212001DC962AA9BED674DB72 /* GlintwakeUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		528BAF33194C7CB59274CE2D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 59AB3852B7A64534A07ECFC4 /* Glintwake */;
+			targetProxy = 9BD42C13EE83021ECA5D64AA /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		A182284BF6916D2C76EF49D0 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				109825C5057FEA1627BDC8CD /* en */,
+				E096BAD98F470602F28D94FA /* ru */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		0F374B278DFA58A93896C834 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.panandafog.GlintwakeUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Glintwake;
+			};
+			name = Debug;
+		};
+		14E2AA591BD6C64CA4DE2867 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphone*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphone*]" = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.panandafog.glintwake;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		26AA2AF740DF46E896C0BD54 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphone*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphone*]" = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.panandafog.glintwake;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A35FACD35ACF72E6490C9C1C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 3HG9ZBM8AV;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Glintwake;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.puzzle-games";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		A82D241C1506CE6DC63A6803 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.panandafog.GlintwakeUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Glintwake;
+			};
+			name = Release;
+		};
+		D0889B63801D8C82A433DCD7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 3HG9ZBM8AV;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Glintwake;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.puzzle-games";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		237009F8C1529BCDF1B4B0D7 /* Build configuration list for PBXNativeTarget "GlintwakeUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0F374B278DFA58A93896C834 /* Debug */,
+				A82D241C1506CE6DC63A6803 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		8F86945C3F07621580A7B125 /* Build configuration list for PBXNativeTarget "Glintwake" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				14E2AA591BD6C64CA4DE2867 /* Debug */,
+				26AA2AF740DF46E896C0BD54 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C919BF88C09D44BE5E164C64 /* Build configuration list for PBXProject "Glintwake" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A35FACD35ACF72E6490C9C1C /* Debug */,
+				D0889B63801D8C82A433DCD7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 780CE3ABB24E936B96C986B2 /* Project object */;
+}
