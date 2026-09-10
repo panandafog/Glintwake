@@ -6,6 +6,8 @@ final class GameStore: ObservableObject {
     @Published private(set) var position: Position
     @Published private(set) var actions: [Action] = []
     @Published private(set) var best: [String: Int] = [:]
+    @Published private(set) var completed: Set<Int> = []
+    @Published private(set) var availableCount = RouteCatalog.pageSize
     @Published var brakeArmed = false
     @Published var hint: Action?
     @Published var message = ""
@@ -19,6 +21,8 @@ final class GameStore: ObservableObject {
         var levelID: Int
         var actions: [Action]
         var best: [String: Int]
+        var completed: Set<Int>?
+        var availableCount: Int?
     }
 
     init() {
@@ -33,6 +37,17 @@ final class GameStore: ObservableObject {
         level = first
         position = first.initial
         best = saved?.best ?? [:]
+        availableCount = RouteCatalog.upperBound(current: id, best: best, saved: saved?.availableCount)
+        if let completed = saved?.completed {
+            self.completed = completed
+        } else {
+            // Keep legacy scores and opened routes, but only certify optimal completions.
+            completed = Set(best.compactMap { key, moves in
+                guard let id = Int(key), id >= 0, id <= 1_000_000,
+                      moves == Levels.make(id).par else { return nil }
+                return id
+            })
+        }
         for action in (saved?.actions ?? []).prefix(1000) {
             let next = Rules.move(position, in: first, action: action)
             guard !next.path.isEmpty else { break }
@@ -42,15 +57,9 @@ final class GameStore: ObservableObject {
     }
 
     var moves: Int { actions.count }
-    var won: Bool { position.won(level) }
-    var title: String {
-        switch level.id {
-        case 0: "Route.First.Title".localized
-        case 1: "Route.Second.Title".localized
-        case 2: "Route.Third.Title".localized
-        default: "Route.Generated.Title".localized
-        }
-    }
+    var outcome: AttemptOutcome { .evaluate(position, level: level, moves: moves) }
+    var won: Bool { outcome == .won }
+    var finished: Bool { outcome != .playing }
     var lesson: String {
         switch level.id {
         case 0: "Route.First.Lesson".localized
@@ -61,11 +70,12 @@ final class GameStore: ObservableObject {
     }
 
     func move(_ direction: Direction) {
-        guard !isAnimating else { return }
+        guard !isAnimating, !finished else { return }
         let action = Action(direction: direction, brake: brakeArmed)
         let next = Rules.move(position, in: level, action: action)
         guard !next.path.isEmpty else { return }
         trail = [position.point] + next.path
+        let collected = next.position.collected > position.collected
         position = next.position
         actions.append(action)
         brakeArmed = false
@@ -75,7 +85,9 @@ final class GameStore: ObservableObject {
         if won {
             let key = String(level.id)
             best[key] = min(best[key] ?? Int.max, moves)
+            completed.insert(level.id)
         }
+        AudioController.shared.play(won ? .win : finished ? .failure : collected ? .crystal : action.brake ? .brake : .slide)
         persist()
         animationTask?.cancel()
         animationTask = Task { [weak self] in
@@ -91,6 +103,7 @@ final class GameStore: ObservableObject {
         actions.removeLast()
         position = actions.reduce(level.initial) { Rules.move($0, in: level, action: $1).position }
         persist()
+        AudioController.shared.play(.undo)
     }
 
     func restart() {
@@ -103,6 +116,7 @@ final class GameStore: ObservableObject {
     func select(_ id: Int) {
         clearTransient()
         level = Levels.make(id)
+        availableCount = max(availableCount, id + 1)
         position = level.initial
         actions = []
         persist()
@@ -110,9 +124,30 @@ final class GameStore: ObservableObject {
 
     func next() { select(level.id + 1) }
 
+    @discardableResult
+    func revealMore() -> Int {
+        let first = availableCount
+        availableCount += RouteCatalog.pageSize
+        persist()
+        return first
+    }
+
+    func toggleBrake() {
+        guard position.brake, !finished, !isAnimating else { return }
+        brakeArmed.toggle()
+        hint = nil
+        message = ""
+        AudioController.shared.play(.brake)
+    }
+
     func showHint() {
-        guard !position.dead, !won, !isAnimating else { return }
-        if let step = Solver.solve(level, from: position)?.first {
+        guard !finished, !isAnimating else { return }
+        if let solution = Solver.solve(level, from: position), let step = solution.first {
+            guard solution.count <= level.par - moves else {
+                hint = nil
+                message = "Hint.OverBudget".localized
+                return
+            }
             hint = step
             brakeArmed = step.brake
             message = step.brake ? "Hint.Brake".localized : "Hint.Direction".localized
@@ -132,7 +167,7 @@ final class GameStore: ObservableObject {
     }
 
     private func persist() {
-        if let data = try? JSONEncoder().encode(Save(levelID: level.id, actions: actions, best: best)) {
+        if let data = try? JSONEncoder().encode(Save(levelID: level.id, actions: actions, best: best, completed: completed, availableCount: availableCount)) {
             defaults.set(data, forKey: saveKey)
         }
     }

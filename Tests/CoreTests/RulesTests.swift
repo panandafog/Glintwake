@@ -10,6 +10,32 @@ import Testing
     #expect(level.par == 3)
 }
 
+@Test func completionRequiresOptimalMoveBudget() throws {
+    let level = Levels.make(0)
+    let solution = try #require(Solver.solve(level))
+    let finish = solution.reduce(level.initial) { Rules.move($0, in: level, action: $1).position }
+    #expect(AttemptOutcome.evaluate(finish, level: level, moves: level.par) == .won)
+    // Old saved wins with detours must not be certified as optimal completions.
+    #expect(AttemptOutcome.evaluate(finish, level: level, moves: level.par + 2) == .exhausted)
+    var position = level.initial
+    for direction in [Direction.east, .west, .east] {
+        position = Rules.move(position, in: level, action: Action(direction: direction)).position
+    }
+    #expect(AttemptOutcome.evaluate(position, level: level, moves: 3) == .exhausted)
+    #expect(AttemptOutcome.evaluate(level.initial, level: level, moves: 2) == .playing)
+    var dead = finish
+    dead.dead = true
+    #expect(AttemptOutcome.evaluate(dead, level: level, moves: level.par) == .hazard)
+}
+
+@Test func catalogRestoresCurrentCompletedAndExplicitlyOpenedLevels() {
+    #expect(RouteCatalog.upperBound(current: 0, best: [:], saved: nil) == 12)
+    #expect(RouteCatalog.upperBound(current: 18, best: [:], saved: nil) == 19)
+    #expect(RouteCatalog.upperBound(current: 0, best: ["25": 8], saved: nil) == 26)
+    #expect(RouteCatalog.upperBound(current: 0, best: ["25": 8], saved: 48) == 48)
+    #expect(RouteCatalog.upperBound(current: 50, best: ["25": 8], saved: 48) == 51)
+}
+
 @Test func gemsDoNotStopSlidingAndRingsDo() {
     let level = Levels.make(0)
     let next = Rules.move(level.initial, in: level, action: Action(direction: .east))

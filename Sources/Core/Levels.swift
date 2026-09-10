@@ -13,7 +13,6 @@ struct SeededRandom: RandomNumberGenerator {
 }
 
 enum Levels {
-    static let count = 12
     static func make(_ id: Int) -> Level {
         let rows: [String]
         switch id {

@@ -7,14 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		128E74116373E8AEDC1B7D3E /* undo.wav in Resources */ = {isa = PBXBuildFile; fileRef = 7671E045187C308951BBB0D0 /* undo.wav */; };
+		15C18933651C97109CDC78E3 /* failure.wav in Resources */ = {isa = PBXBuildFile; fileRef = EC5A1B65A83B614C759D384B /* failure.wav */; };
 		212001DC962AA9BED674DB72 /* GlintwakeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6321CDEF58811CE8CD35DD26 /* GlintwakeUITests.swift */; };
 		2177408B95DD85D082873941 /* String+Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 753E435EEF9B68A98162891A /* String+Localization.swift */; };
 		27F27AF1DC173D19A2419476 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7C3B88014377046578EB0DC /* ContentView.swift */; };
+		2A0F95BA11DC2AA9CDD4B228 /* slide.wav in Resources */ = {isa = PBXBuildFile; fileRef = 4325FF7E657EB15301E549DB /* slide.wav */; };
 		42B1F9FDE12703648205C3D7 /* Levels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85009BF6C994D32579910E8A /* Levels.swift */; };
 		47167825E6420CD0EF44FE11 /* GlintwakeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6286915C9B39B0D9B32F532 /* GlintwakeApp.swift */; };
 		474E8E2E2DA96893149A0D72 /* GameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 375F08F4D42DCDFD81B9A4E6 /* GameStore.swift */; };
+		4AAE40FD6761024836F7BB5B /* crystal.wav in Resources */ = {isa = PBXBuildFile; fileRef = 6CE12689517BC75423257164 /* crystal.wav */; };
+		4C453D50F07974915FCACFEF /* win.wav in Resources */ = {isa = PBXBuildFile; fileRef = D06BBC73BBDBE7324A8818B0 /* win.wav */; };
 		4C68BA0AC95F7D907B2AB875 /* BoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29FB5BCFA966DE4E2C1E7A05 /* BoardView.swift */; };
+		8D5898EC823E587B96C07BA8 /* Attempt.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1264538B6426B6803E1EC90 /* Attempt.swift */; };
+		A808ADFD75FDD0E64DEE1078 /* AudioController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD83C65002BBF544F7D625D7 /* AudioController.swift */; };
+		B1C3C089E809E264C69F9DC1 /* brake.wav in Resources */ = {isa = PBXBuildFile; fileRef = 918847B22F1A0887DE6BFE18 /* brake.wav */; };
 		D23A805DD47944484E8AB6A6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 46C5AF0857B577E7BA29E4C7 /* Assets.xcassets */; };
+		D73BAB5C62987E9D3D07507D /* ambience.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9E4085B3292E733268CC59E4 /* ambience.wav */; };
 		FB2AC735F4509AAA7445FFD8 /* Game.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94201AFAF8E56E25B3E80E34 /* Game.swift */; };
 		FD6BA0075623F1921CBDB884 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = A182284BF6916D2C76EF49D0 /* Localizable.strings */; };
 /* End PBXBuildFile section */
@@ -33,15 +42,24 @@
 		109825C5057FEA1627BDC8CD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		29FB5BCFA966DE4E2C1E7A05 /* BoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardView.swift; sourceTree = "<group>"; };
 		375F08F4D42DCDFD81B9A4E6 /* GameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStore.swift; sourceTree = "<group>"; };
+		4325FF7E657EB15301E549DB /* slide.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = slide.wav; sourceTree = "<group>"; };
 		46C5AF0857B577E7BA29E4C7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6321CDEF58811CE8CD35DD26 /* GlintwakeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlintwakeUITests.swift; sourceTree = "<group>"; };
+		6CE12689517BC75423257164 /* crystal.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = crystal.wav; sourceTree = "<group>"; };
 		753E435EEF9B68A98162891A /* String+Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Localization.swift"; sourceTree = "<group>"; };
+		7671E045187C308951BBB0D0 /* undo.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = undo.wav; sourceTree = "<group>"; };
 		85009BF6C994D32579910E8A /* Levels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Levels.swift; sourceTree = "<group>"; };
+		918847B22F1A0887DE6BFE18 /* brake.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = brake.wav; sourceTree = "<group>"; };
 		94201AFAF8E56E25B3E80E34 /* Game.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Game.swift; sourceTree = "<group>"; };
+		9E4085B3292E733268CC59E4 /* ambience.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ambience.wav; sourceTree = "<group>"; };
+		AD83C65002BBF544F7D625D7 /* AudioController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioController.swift; sourceTree = "<group>"; };
 		B7C3B88014377046578EB0DC /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		BAD31CFD5865E9A1EF828C30 /* Glintwake.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Glintwake.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D06BBC73BBDBE7324A8818B0 /* win.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = win.wav; sourceTree = "<group>"; };
+		D1264538B6426B6803E1EC90 /* Attempt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Attempt.swift; sourceTree = "<group>"; };
 		D6286915C9B39B0D9B32F532 /* GlintwakeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlintwakeApp.swift; sourceTree = "<group>"; };
 		E096BAD98F470602F28D94FA /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		EC5A1B65A83B614C759D384B /* failure.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = failure.wav; sourceTree = "<group>"; };
 		F17E8FAEB35DC9BB2573ACCE /* GlintwakeUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = GlintwakeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -67,6 +85,7 @@
 			isa = PBXGroup;
 			children = (
 				A182284BF6916D2C76EF49D0 /* Localizable.strings */,
+				AA9D3EC56292FF793C89B6D0 /* Audio */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -74,6 +93,7 @@
 		17C03404A716D05FDA9D03BF /* App */ = {
 			isa = PBXGroup;
 			children = (
+				AD83C65002BBF544F7D625D7 /* AudioController.swift */,
 				29FB5BCFA966DE4E2C1E7A05 /* BoardView.swift */,
 				B7C3B88014377046578EB0DC /* ContentView.swift */,
 				375F08F4D42DCDFD81B9A4E6 /* GameStore.swift */,
@@ -94,6 +114,20 @@
 			);
 			sourceTree = "<group>";
 		};
+		AA9D3EC56292FF793C89B6D0 /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+				9E4085B3292E733268CC59E4 /* ambience.wav */,
+				918847B22F1A0887DE6BFE18 /* brake.wav */,
+				6CE12689517BC75423257164 /* crystal.wav */,
+				EC5A1B65A83B614C759D384B /* failure.wav */,
+				4325FF7E657EB15301E549DB /* slide.wav */,
+				7671E045187C308951BBB0D0 /* undo.wav */,
+				D06BBC73BBDBE7324A8818B0 /* win.wav */,
+			);
+			path = Audio;
+			sourceTree = "<group>";
+		};
 		D74C8156C6A81DC370CAF91A /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -106,6 +140,7 @@
 		EAC77E8A7877367AE9D84A2D /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				D1264538B6426B6803E1EC90 /* Attempt.swift */,
 				94201AFAF8E56E25B3E80E34 /* Game.swift */,
 				85009BF6C994D32579910E8A /* Levels.swift */,
 			);
@@ -208,6 +243,13 @@
 			files = (
 				D23A805DD47944484E8AB6A6 /* Assets.xcassets in Resources */,
 				FD6BA0075623F1921CBDB884 /* Localizable.strings in Resources */,
+				D73BAB5C62987E9D3D07507D /* ambience.wav in Resources */,
+				B1C3C089E809E264C69F9DC1 /* brake.wav in Resources */,
+				4AAE40FD6761024836F7BB5B /* crystal.wav in Resources */,
+				15C18933651C97109CDC78E3 /* failure.wav in Resources */,
+				2A0F95BA11DC2AA9CDD4B228 /* slide.wav in Resources */,
+				128E74116373E8AEDC1B7D3E /* undo.wav in Resources */,
+				4C453D50F07974915FCACFEF /* win.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -218,6 +260,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D5898EC823E587B96C07BA8 /* Attempt.swift in Sources */,
+				A808ADFD75FDD0E64DEE1078 /* AudioController.swift in Sources */,
 				4C68BA0AC95F7D907B2AB875 /* BoardView.swift in Sources */,
 				27F27AF1DC173D19A2419476 /* ContentView.swift in Sources */,
 				FB2AC735F4509AAA7445FFD8 /* Game.swift in Sources */,

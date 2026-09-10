@@ -2,6 +2,9 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var game = GameStore()
+    @ObservedObject private var audio = AudioController.shared
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var showAudio = false
     @State private var showLevels = false
     @State private var showHelp = false
     @State private var confirmRestart = false
@@ -16,7 +19,7 @@ struct ContentView: View {
                             routeStatus
                             fittedBoard
                         }
-                        controls.frame(width: 280)
+                        controls.frame(width: 330)
                     }
                 } else {
                     routeStatus
@@ -37,6 +40,8 @@ struct ContentView: View {
         .foregroundStyle(.white)
         .sheet(isPresented: $showLevels) { levelPicker }
         .sheet(isPresented: $showHelp) { help }
+        .sheet(isPresented: $showAudio) { audioSettings }
+        .onChange(of: scenePhase, initial: true) { _, phase in audio.setActive(phase == .active) }
         .confirmationDialog("Restart.Confirm".localized, isPresented: $confirmRestart, titleVisibility: .visible) {
             Button("Button.Restart".localized, role: .destructive) { game.restart() }
         }
@@ -83,33 +88,32 @@ struct ContentView: View {
 
     private var routeStatus: some View {
         HStack(spacing: 6) {
-            Text(game.title)
-                .font(.system(size: 13, weight: .medium, design: .rounded))
+            Text("Game.Limit".localized(game.level.par))
+                .font(.system(size: 12, weight: .medium, design: .rounded))
                 .lineLimit(1).minimumScaleFactor(0.8)
             Spacer(minLength: 4)
             stat("diamond.fill", "\(game.position.collected)/\(game.level.gems.count)", color: Palette.gold)
                 .accessibilityIdentifier("crystals")
-            stat("arrow.triangle.turn.up.right.diamond", "\(game.moves)", color: Palette.secondary)
+            stat("arrow.triangle.turn.up.right.diamond", "\(game.moves)/\(game.level.par)", color: game.outcome == .exhausted ? Palette.coral : Palette.secondary)
                 .accessibilityIdentifier("moves")
         }.frame(height: 24)
     }
 
     private var controls: some View {
         VStack(spacing: 10) {
-            if (game.won || game.position.dead) && !game.isAnimating {
+            if game.finished && !game.isAnimating {
                 resultCard
             } else {
-                HStack(alignment: .center, spacing: 18) {
+                HStack(alignment: .center, spacing: 14) {
                     directionPad
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Game.Par".localized(game.level.par))
-                            .font(.system(size: 11, weight: .medium, design: .monospaced))
-                            .foregroundStyle(Palette.secondary)
+                        Button { showAudio = true } label: {
+                            Label("Audio.Title".localized, systemImage: audio.effectsEnabled || audio.ambienceEnabled ? "speaker.wave.2" : "speaker.slash")
+                                .font(.system(size: 12, weight: .medium))
+                        }.buttonStyle(SoftButton()).accessibilityIdentifier("audio-settings")
                         if game.level.brake {
                             Button {
-                                game.brakeArmed.toggle()
-                                game.hint = nil
-                                game.message = ""
+                                game.toggleBrake()
                             } label: {
                                 Label(game.brakeArmed ? "Brake.Armed".localized : "Brake.Title".localized, systemImage: "pause.circle")
                                     .font(.system(size: 12, weight: .semibold))
@@ -128,7 +132,7 @@ struct ContentView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(height: 142)
+                .frame(height: directionSize * 3 + 12)
             }
             HStack(spacing: 10) {
                 Button { game.undo() } label: {
@@ -139,7 +143,7 @@ struct ContentView: View {
                 }.accessibilityLabel("Button.Restart".localized).accessibilityIdentifier("restart")
                 Button { game.showHint() } label: {
                     Label("Button.Hint".localized, systemImage: "lightbulb").frame(maxWidth: .infinity)
-                }.disabled(game.won || game.position.dead || game.isAnimating).accessibilityIdentifier("hint")
+                }.disabled(game.finished || game.isAnimating).accessibilityIdentifier("hint")
             }
             .font(.system(size: 12, weight: .medium))
             .lineLimit(1)
@@ -149,19 +153,27 @@ struct ContentView: View {
         .fixedSize(horizontal: false, vertical: true)
     }
 
+    private var directionSize: CGFloat {
+        #if os(iOS)
+        56
+        #else
+        44
+        #endif
+    }
+
     private var directionPad: some View {
         let grid: [[Direction?]] = [[.northWest, .north, .northEast], [.west, nil, .east], [.southWest, .south, .southEast]]
-        return VStack(spacing: 5) {
+        return VStack(spacing: 6) {
             ForEach(0..<3) { row in
-                HStack(spacing: 5) {
+                HStack(spacing: 6) {
                     ForEach(0..<3) { column in
                         if let direction = grid[row][column] {
                             let suggested = game.hint?.direction == direction
                             Button { game.move(direction) } label: {
                                 Image(systemName: direction.symbol)
-                                    .font(.system(size: 16, weight: .medium))
+                                    .font(.system(size: directionSize * 0.4, weight: .medium))
                                     .foregroundStyle(suggested ? Palette.background : Palette.mint)
-                                    .frame(width: 44, height: 44)
+                                    .frame(width: directionSize, height: directionSize)
                                     .background(suggested ? Palette.gold : Palette.panel, in: RoundedRectangle(cornerRadius: 11))
                             }
                             .buttonStyle(.plain).disabled(game.isAnimating)
@@ -169,7 +181,7 @@ struct ContentView: View {
                             .accessibilityIdentifier("direction-\(direction.rawValue)")
                         } else {
                             Image(systemName: "sparkle").foregroundStyle(Palette.mint.opacity(0.45))
-                                .frame(width: 44, height: 44).accessibilityHidden(true)
+                                .frame(width: directionSize, height: directionSize).accessibilityHidden(true)
                         }
                     }
                 }
@@ -179,11 +191,11 @@ struct ContentView: View {
 
     private var resultCard: some View {
         VStack(spacing: 12) {
-            Label(game.won ? "Result.Victory".localized : "Result.Defeat".localized, systemImage: game.won ? "checkmark.seal.fill" : "burst.fill")
+            Label(game.won ? "Result.Victory".localized : game.outcome == .exhausted ? "Result.Exhausted".localized : "Result.Defeat".localized, systemImage: game.won ? "checkmark.seal.fill" : "burst.fill")
                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                 .foregroundStyle(game.won ? Palette.mint : Palette.coral)
-                .accessibilityIdentifier(game.won ? "victory" : "defeat")
-            Text(game.won ? "Result.Score".localized(game.moves, game.best[String(game.level.id)] ?? game.moves) : "Result.Undo".localized)
+                .accessibilityIdentifier(game.won ? "victory" : game.outcome == .exhausted ? "exhausted" : "defeat")
+            Text(game.won ? "Result.Perfect".localized(game.moves) : game.outcome == .exhausted ? "Result.Budget".localized(game.level.par) : "Result.Undo".localized)
                 .font(.system(size: 12)).foregroundStyle(Palette.secondary)
             Button { game.won ? game.next() : game.undo() } label: {
                 Label(game.won ? "Button.NextRoute".localized : "Button.TryAgain".localized, systemImage: game.won ? "arrow.right" : "arrow.uturn.backward")
@@ -205,36 +217,40 @@ struct ContentView: View {
 
     private var levelPicker: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    Text("Routes.Description".localized)
-                        .foregroundStyle(Palette.secondary)
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 90))], spacing: 12) {
-                        ForEach(0..<Levels.count, id: \.self) { id in
-                            Button {
-                                game.select(id)
-                                showLevels = false
-                            } label: {
-                                VStack(spacing: 9) {
-                                    Text(String(format: "%02d", id + 1)).font(.system(size: 27, weight: .medium, design: .rounded))
-                                    Image(systemName: game.best[String(id)] != nil ? "checkmark.circle.fill" : id < 3 ? "sparkle" : "circle.dotted")
-                                        .foregroundStyle(Palette.mint)
-                                }.frame(maxWidth: .infinity).frame(height: 90)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        Text("Routes.Description".localized)
+                            .foregroundStyle(Palette.secondary)
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 90))], spacing: 12) {
+                            ForEach(0..<game.availableCount, id: \.self) { id in
+                                Button {
+                                    game.select(id)
+                                    showLevels = false
+                                } label: {
+                                    VStack(spacing: 9) {
+                                        Text(String(format: "%02d", id + 1)).font(.system(size: 27, weight: .medium, design: .rounded))
+                                        Image(systemName: game.completed.contains(id) ? "checkmark.circle.fill" : id < 3 ? "sparkle" : "circle.dotted")
+                                            .foregroundStyle(Palette.mint)
+                                    }.frame(maxWidth: .infinity).frame(height: 90)
+                                }
+                                .buttonStyle(SoftButton(highlighted: game.level.id == id))
+                                .accessibilityIdentifier("level-\(id)")
+                                .accessibilityLabel((game.completed.contains(id) ? "Routes.CompletedLevel" : "Routes.Level").localized(id + 1))
+                                .id(id)
                             }
-                            .buttonStyle(SoftButton(highlighted: game.level.id == id))
-                            .accessibilityIdentifier("level-\(id)")
                         }
-                    }
-                    Button {
-                        let next = max(12, (game.best.keys.compactMap(Int.init).max() ?? 11) + 1, game.level.id + 1)
-                        game.select(next)
-                        showLevels = false
-                    } label: {
-                        Label("Button.Explore".localized, systemImage: "sparkles").frame(maxWidth: .infinity)
-                    }.buttonStyle(SoftButton(highlighted: true)).accessibilityIdentifier("explore")
-                }.padding(22)
+                        Button {
+                            game.revealMore()
+                        } label: {
+                            Label("Button.MoreLevels".localized(RouteCatalog.pageSize), systemImage: "sparkles").frame(maxWidth: .infinity)
+                        }.buttonStyle(SoftButton(highlighted: true)).accessibilityIdentifier("explore")
+                    }.padding(22)
+                }
+                .background(Palette.background)
+                .onAppear { proxy.scrollTo(game.level.id, anchor: .center) }
+                .onChange(of: game.availableCount) { old, _ in proxy.scrollTo(old, anchor: .top) }
             }
-            .background(Palette.background)
             .navigationTitle("Routes.Title".localized)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Button.Done".localized) { showLevels = false } } }
         }
@@ -266,6 +282,20 @@ struct ContentView: View {
         }.frame(minWidth: 300, idealWidth: 420, minHeight: 340, idealHeight: 450)
     }
 
+    private var audioSettings: some View {
+        NavigationStack {
+            Form {
+                Toggle("Audio.Effects".localized, isOn: $audio.effectsEnabled)
+                    .accessibilityIdentifier("audio-effects")
+                Toggle("Audio.Ambience".localized, isOn: $audio.ambienceEnabled)
+                    .accessibilityIdentifier("audio-ambience")
+                Text("Audio.Description".localized).font(.footnote).foregroundStyle(Palette.secondary)
+            }
+            .navigationTitle("Audio.Title".localized)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Button.Done".localized) { showAudio = false } } }
+        }.frame(minWidth: 300, idealWidth: 380, minHeight: 260, idealHeight: 300)
+    }
+
     private func helpRow(_ icon: String, _ title: String, _ detail: String, _ color: Color) -> some View {
         HStack(alignment: .top, spacing: 15) {
             Image(systemName: icon).font(.system(size: 22)).foregroundStyle(color).frame(width: 28)
@@ -286,8 +316,8 @@ struct ContentView: View {
             Button("") { game.move(.east) }.keyboardShortcut(.rightArrow, modifiers: [])
             Button("") { game.move(.south) }.keyboardShortcut(.downArrow, modifiers: [])
             Button("") { game.move(.west) }.keyboardShortcut(.leftArrow, modifiers: [])
-            Button("") { if game.position.brake { game.brakeArmed.toggle() } }.keyboardShortcut("b", modifiers: [])
-        }.hidden().disabled(showHelp || showLevels || confirmRestart)
+            Button("") { game.toggleBrake() }.keyboardShortcut("b", modifiers: [])
+        }.hidden().disabled(showHelp || showLevels || showAudio || confirmRestart)
     }
     #endif
 }
