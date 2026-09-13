@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -23,6 +23,7 @@
 		A808ADFD75FDD0E64DEE1078 /* AudioController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD83C65002BBF544F7D625D7 /* AudioController.swift */; };
 		B1C3C089E809E264C69F9DC1 /* brake.wav in Resources */ = {isa = PBXBuildFile; fileRef = 918847B22F1A0887DE6BFE18 /* brake.wav */; };
 		D23A805DD47944484E8AB6A6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 46C5AF0857B577E7BA29E4C7 /* Assets.xcassets */; };
+		D3EE58B28978394680EBB4A3 /* Difficulty.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFCDBE7058532D9500D33B1C /* Difficulty.swift */; };
 		D73BAB5C62987E9D3D07507D /* ambience.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9E4085B3292E733268CC59E4 /* ambience.wav */; };
 		FB2AC735F4509AAA7445FFD8 /* Game.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94201AFAF8E56E25B3E80E34 /* Game.swift */; };
 		FD6BA0075623F1921CBDB884 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = A182284BF6916D2C76EF49D0 /* Localizable.strings */; };
@@ -53,8 +54,9 @@
 		94201AFAF8E56E25B3E80E34 /* Game.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Game.swift; sourceTree = "<group>"; };
 		9E4085B3292E733268CC59E4 /* ambience.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ambience.wav; sourceTree = "<group>"; };
 		AD83C65002BBF544F7D625D7 /* AudioController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioController.swift; sourceTree = "<group>"; };
+		AFCDBE7058532D9500D33B1C /* Difficulty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Difficulty.swift; sourceTree = "<group>"; };
 		B7C3B88014377046578EB0DC /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		BAD31CFD5865E9A1EF828C30 /* Glintwake.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Glintwake.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BAD31CFD5865E9A1EF828C30 /* Glintwake.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Glintwake.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D06BBC73BBDBE7324A8818B0 /* win.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = win.wav; sourceTree = "<group>"; };
 		D1264538B6426B6803E1EC90 /* Attempt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Attempt.swift; sourceTree = "<group>"; };
 		D6286915C9B39B0D9B32F532 /* GlintwakeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlintwakeApp.swift; sourceTree = "<group>"; };
@@ -141,6 +143,7 @@
 			isa = PBXGroup;
 			children = (
 				D1264538B6426B6803E1EC90 /* Attempt.swift */,
+				AFCDBE7058532D9500D33B1C /* Difficulty.swift */,
 				94201AFAF8E56E25B3E80E34 /* Game.swift */,
 				85009BF6C994D32579910E8A /* Levels.swift */,
 			);
@@ -226,6 +229,7 @@
 			);
 			mainGroup = 6E1E95EBF5C0CD7EB4D72B84;
 			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -263,6 +267,7 @@
 				A808ADFD75FDD0E64DEE1078 /* AudioController.swift in Sources */,
 				4C68BA0AC95F7D907B2AB875 /* BoardView.swift in Sources */,
 				27F27AF1DC173D19A2419476 /* ContentView.swift in Sources */,
+				D3EE58B28978394680EBB4A3 /* Difficulty.swift in Sources */,
 				FB2AC735F4509AAA7445FFD8 /* Game.swift in Sources */,
 				474E8E2E2DA96893149A0D72 /* GameStore.swift in Sources */,
 				47167825E6420CD0EF44FE11 /* GlintwakeApp.swift in Sources */,
@@ -327,21 +332,13 @@
 				CURRENT_PROJECT_VERSION = 3;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Glintwake;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.puzzle-games";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphone*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphone*]" = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "$(inherited) @executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.panandafog.glintwake;
 				SDKROOT = auto;
@@ -361,21 +358,13 @@
 				CURRENT_PROJECT_VERSION = 3;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Glintwake;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.puzzle-games";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphone*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphone*]" = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "$(inherited) @executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.panandafog.glintwake;
 				SDKROOT = auto;

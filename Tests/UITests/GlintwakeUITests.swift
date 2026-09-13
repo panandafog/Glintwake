@@ -20,7 +20,7 @@ final class GlintwakeUITests: XCTestCase {
         app.launchArguments.append("--keep-test-session")
         app.launch()
         XCTAssertTrue(app.staticTexts["exhausted"].waitForExistence(timeout: 5))
-        app.buttons["result-action"].tap()
+        app.buttons["undo"].tap()
         XCTAssertTrue(app.buttons["direction-2"].waitForExistence(timeout: 3))
         app.buttons["hint"].tap()
         XCTAssertTrue(app.staticTexts["guidance"].label.contains("exceeds the limit"))
@@ -33,12 +33,21 @@ final class GlintwakeUITests: XCTestCase {
             button.tap()
         }
         XCTAssertTrue(app.staticTexts["victory"].waitForExistence(timeout: 5))
-        app.buttons["levels"].tap()
-        XCTAssertTrue(app.buttons["level-0"].waitForExistence(timeout: 3))
-        XCTAssertEqual(app.buttons["level-0"].label, "Level 1, completed")
+        app.buttons["difficulty"].tap()
+        XCTAssertTrue(app.buttons["mode-easy"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["mode-easy"].label.contains("Solved: 1"))
+        app.buttons["Done"].tap()
+        app.buttons["undo"].tap()
+        app.buttons["direction-6"].tap()
+        XCTAssertTrue(app.staticTexts["victory"].waitForExistence(timeout: 5))
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(app.staticTexts["victory"].waitForExistence(timeout: 5))
+        app.buttons["difficulty"].tap()
+        XCTAssertTrue(app.buttons["mode-easy"].label.contains("Solved: 1"))
     }
 
-    func testExpandedCatalogAndSoundPreferencesPersist() throws {
+    func testDifficultySwitchAndSoundPreferencesPersist() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launch()
@@ -51,34 +60,28 @@ final class GlintwakeUITests: XCTestCase {
         XCTAssertEqual(ambience.value as? String, "0")
         XCTAssertEqual(app.switches["audio-effects"].value as? String, "1")
         app.buttons["Done"].tap()
-        app.buttons["levels"].tap()
-        let more = app.buttons["explore"]
-        for _ in 0..<8 {
-            if more.isHittable { break }
-            app.scrollViews.firstMatch.swipeUp()
-        }
-        XCTAssertTrue(more.isHittable)
-        more.tap()
-        let level = app.buttons["level-12"]
-        XCTAssertTrue(level.waitForExistence(timeout: 5))
-        XCTAssertTrue(level.isHittable)
-        level.tap()
-        XCTAssertTrue(app.buttons["levels"].label.contains("13"))
+        app.buttons["difficulty"].tap()
+        app.buttons["mode-hard"].tap()
+        expectation(for: NSPredicate(format: "label CONTAINS 'Hard' AND enabled == true"), evaluatedWith: app.buttons["difficulty"])
+        waitForExpectations(timeout: 60)
+        XCTAssertTrue(app.buttons["brake"].exists)
+        let before = app.descendants(matching: .any).matching(identifier: "board").allElementsBoundByIndex.map(\.label)
         app.terminate()
         app.launchArguments.append("--keep-test-session")
         app.launch()
-        XCTAssertTrue(app.buttons["levels"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.buttons["levels"].label.contains("13"))
-        app.buttons["levels"].tap()
-        XCTAssertTrue(level.waitForExistence(timeout: 5))
-        XCTAssertTrue(level.isHittable)
-        // The second batch is retained, even though none of it has been completed yet.
-        for _ in 0..<8 {
-            if app.buttons["level-23"].isHittable { break }
-            app.scrollViews.firstMatch.swipeUp()
-        }
-        XCTAssertTrue(app.buttons["level-23"].isHittable)
-        app.buttons["Done"].tap()
+        XCTAssertTrue(app.buttons["difficulty"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["difficulty"].label.contains("Hard"))
+        XCTAssertEqual(before, app.descendants(matching: .any).matching(identifier: "board").allElementsBoundByIndex.map(\.label))
+        app.buttons["difficulty"].tap()
+        for mode in ["easy", "medium", "hard"] { XCTAssertTrue(app.buttons["mode-\(mode)"].label.contains("Solved: 0")) }
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        attachment.name = "Difficulty and counters"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        app.buttons["other-puzzle"].tap()
+        expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: app.buttons["difficulty"])
+        waitForExpectations(timeout: 60)
+        XCTAssertTrue(app.buttons["difficulty"].label.contains("Hard"))
         app.buttons["audio-settings"].tap()
         XCTAssertEqual(app.switches["audio-ambience"].value as? String, "0")
         XCTAssertEqual(app.switches["audio-effects"].value as? String, "1")
@@ -166,14 +169,14 @@ final class GlintwakeUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["victory"].waitForExistence(timeout: 5))
         app.buttons["result-action"].tap()
         XCTAssertTrue(app.buttons["direction-2"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["levels"].label.contains("02"))
-        app.buttons["levels"].tap()
-        XCTAssertTrue(app.buttons["level-2"].waitForExistence(timeout: 3))
-        app.buttons["level-2"].tap()
+        XCTAssertTrue(app.buttons["difficulty"].label.contains("Easy"))
+        app.buttons["difficulty"].tap()
+        XCTAssertTrue(app.buttons["mode-easy"].label.contains("Solved: 1"))
+        app.buttons["mode-medium"].tap()
+        expectation(for: NSPredicate(format: "label CONTAINS 'Medium' AND enabled == true"), evaluatedWith: app.buttons["difficulty"])
+        waitForExpectations(timeout: 30)
         XCTAssertTrue(app.buttons["brake"].waitForExistence(timeout: 3))
-        app.buttons["brake"].tap()
-        app.buttons["direction-2"].tap()
-        app.buttons["undo"].tap()
-        XCTAssertTrue(app.buttons["brake"].isEnabled)
+        app.buttons["hint"].tap()
+        XCTAssertTrue(app.staticTexts["guidance"].exists)
     }
 }

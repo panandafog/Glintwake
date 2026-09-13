@@ -2,12 +2,13 @@ import SwiftUI
 
 @MainActor
 final class GameStore: ObservableObject {
-    @Published private(set) var level: Level
+    @Published private(set) var session: PuzzleSession
+    @Published private(set) var isGenerating = false
+    var level: Level { session.level }
+    var actions: [Action] { session.actions }
+    var difficulty: Difficulty { session.difficulty }
     @Published private(set) var position: Position
-    @Published private(set) var actions: [Action] = []
-    @Published private(set) var best: [String: Int] = [:]
-    @Published private(set) var completed: Set<Int> = []
-    @Published private(set) var availableCount = RouteCatalog.pageSize
+    private var prepared: Task<Level, Never>?
     @Published var brakeArmed = false
     @Published var hint: Action?
     @Published var message = ""
@@ -15,9 +16,9 @@ final class GameStore: ObservableObject {
     @Published private(set) var isAnimating = false
     private var animationTask: Task<Void, Never>?
     private let defaults: UserDefaults
-    private let saveKey = "glintwake.session.v1"
+    private let saveKey = "glintwake.session.v2"
 
-    struct Save: Codable {
+    struct LegacySave: Codable {
         var levelID: Int
         var actions: [Action]
         var best: [String: Int]
@@ -31,61 +32,49 @@ final class GameStore: ObservableObject {
         if testing && !ProcessInfo.processInfo.arguments.contains("--keep-test-session") {
             defaults.removePersistentDomain(forName: "Glintwake.UITests")
         }
-        let saved = defaults.data(forKey: saveKey).flatMap { try? JSONDecoder().decode(Save.self, from: $0) }
-        let id = min(max(saved?.levelID ?? 0, 0), 1_000_000)
-        let first = Levels.make(id)
-        level = first
-        position = first.initial
-        best = saved?.best ?? [:]
-        availableCount = RouteCatalog.upperBound(current: id, best: best, saved: saved?.availableCount)
-        if let completed = saved?.completed {
-            self.completed = completed
+        let restored: PuzzleSession
+        if let data = defaults.data(forKey: saveKey),
+           let saved = try? JSONDecoder().decode(PuzzleSession.self, from: data) {
+            restored = saved
+        } else if let data = defaults.data(forKey: "glintwake.session.v1"),
+                  let old = try? JSONDecoder().decode(LegacySave.self, from: data) {
+            let level = Levels.make(min(max(old.levelID, 0), 1_000_000))
+            let mode: Difficulty = level.par <= 6 ? .easy : level.par <= 10 ? .medium : .hard
+            restored = PuzzleSession(level: level, difficulty: mode,
+                                    actions: Array(old.actions.prefix(1000)),
+                                    credited: old.best[String(old.levelID)] != nil)
         } else {
-            // Keep legacy scores and opened routes, but only certify optimal completions.
-            completed = Set(best.compactMap { key, moves in
-                guard let id = Int(key), id >= 0, id <= 1_000_000,
-                      moves == Levels.make(id).par else { return nil }
-                return id
-            })
+            let level = testing ? Levels.make(0) : Levels.puzzle(seed: UInt64.random(in: 0...UInt64.max), difficulty: .easy)
+            restored = PuzzleSession(level: level, difficulty: .easy)
         }
-        for action in (saved?.actions ?? []).prefix(1000) {
-            let next = Rules.move(position, in: first, action: action)
-            guard !next.path.isEmpty else { break }
-            actions.append(action)
-            position = next.position
-        }
+        session = restored
+        position = restored.position
+        persist()
     }
 
     var moves: Int { actions.count }
     var outcome: AttemptOutcome { .evaluate(position, level: level, moves: moves) }
     var won: Bool { outcome == .won }
     var finished: Bool { outcome != .playing }
-    var lesson: String {
-        switch level.id {
-        case 0: "Route.First.Lesson".localized
-        case 1: "Route.Second.Lesson".localized
-        case 2: "Route.Third.Lesson".localized
-        default: "Route.Generated.Lesson".localized
-        }
-    }
+    var lesson: String { "Difficulty.\(difficulty.rawValue).Detail".localized }
+    func count(_ difficulty: Difficulty) -> Int { session.counts[difficulty.rawValue, default: 0] }
 
     func move(_ direction: Direction) {
-        guard !isAnimating, !finished else { return }
+        guard !isAnimating, !isGenerating, !finished else { return }
         let action = Action(direction: direction, brake: brakeArmed)
         let next = Rules.move(position, in: level, action: action)
         guard !next.path.isEmpty else { return }
         trail = [position.point] + next.path
         let collected = next.position.collected > position.collected
         position = next.position
-        actions.append(action)
+        session.actions.append(action)
         brakeArmed = false
         hint = nil
         message = ""
         isAnimating = true
         if won {
-            let key = String(level.id)
-            best[key] = min(best[key] ?? Int.max, moves)
-            completed.insert(level.id)
+            session.creditCompletion()
+            if prepared == nil { prepared = generate(difficulty) }
         }
         AudioController.shared.play(won ? .win : finished ? .failure : collected ? .crystal : action.brake ? .brake : .slide)
         persist()
@@ -98,42 +87,48 @@ final class GameStore: ObservableObject {
     }
 
     func undo() {
-        guard !actions.isEmpty else { return }
+        guard !isGenerating, !actions.isEmpty else { return }
         clearTransient()
-        actions.removeLast()
+        session.actions.removeLast()
         position = actions.reduce(level.initial) { Rules.move($0, in: level, action: $1).position }
         persist()
         AudioController.shared.play(.undo)
     }
 
     func restart() {
+        guard !isGenerating else { return }
         clearTransient()
-        actions = []
+        session.actions = []
         position = level.initial
         persist()
     }
 
-    func select(_ id: Int) {
+    private func generate(_ difficulty: Difficulty) -> Task<Level, Never> {
+        let seed = UInt64.random(in: 0...UInt64.max)
+        return Task.detached(priority: .userInitiated) { Levels.puzzle(seed: seed, difficulty: difficulty) }
+    }
+
+    func newPuzzle(_ mode: Difficulty? = nil) {
+        guard !isGenerating else { return }
+        let target = mode ?? difficulty
+        let work = target == difficulty ? (prepared ?? generate(target)) : generate(target)
+        prepared = nil
         clearTransient()
-        level = Levels.make(id)
-        availableCount = max(availableCount, id + 1)
-        position = level.initial
-        actions = []
-        persist()
+        isGenerating = true
+        Task { [weak self] in
+            let level = await work.value
+            guard let self else { return }
+            self.session.replace(with: level, difficulty: target)
+            self.position = level.initial
+            self.isGenerating = false
+            self.persist()
+        }
     }
 
-    func next() { select(level.id + 1) }
-
-    @discardableResult
-    func revealMore() -> Int {
-        let first = availableCount
-        availableCount += RouteCatalog.pageSize
-        persist()
-        return first
-    }
+    func next() { guard won else { return }; newPuzzle() }
 
     func toggleBrake() {
-        guard position.brake, !finished, !isAnimating else { return }
+        guard !isGenerating, position.brake, !finished, !isAnimating else { return }
         brakeArmed.toggle()
         hint = nil
         message = ""
@@ -141,7 +136,7 @@ final class GameStore: ObservableObject {
     }
 
     func showHint() {
-        guard !finished, !isAnimating else { return }
+        guard !isGenerating, !finished, !isAnimating else { return }
         if let solution = Solver.solve(level, from: position), let step = solution.first {
             guard solution.count <= level.par - moves else {
                 hint = nil
@@ -167,7 +162,7 @@ final class GameStore: ObservableObject {
     }
 
     private func persist() {
-        if let data = try? JSONEncoder().encode(Save(levelID: level.id, actions: actions, best: best, completed: completed, availableCount: availableCount)) {
+        if let data = try? JSONEncoder().encode(session) {
             defaults.set(data, forKey: saveKey)
         }
     }

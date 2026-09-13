@@ -28,14 +28,6 @@ import Testing
     #expect(AttemptOutcome.evaluate(dead, level: level, moves: level.par) == .hazard)
 }
 
-@Test func catalogRestoresCurrentCompletedAndExplicitlyOpenedLevels() {
-    #expect(RouteCatalog.upperBound(current: 0, best: [:], saved: nil) == 12)
-    #expect(RouteCatalog.upperBound(current: 18, best: [:], saved: nil) == 19)
-    #expect(RouteCatalog.upperBound(current: 0, best: ["25": 8], saved: nil) == 26)
-    #expect(RouteCatalog.upperBound(current: 0, best: ["25": 8], saved: 48) == 48)
-    #expect(RouteCatalog.upperBound(current: 50, best: ["25": 8], saved: 48) == 51)
-}
-
 @Test func gemsDoNotStopSlidingAndRingsDo() {
     let level = Levels.make(0)
     let next = Rules.move(level.initial, in: level, action: Action(direction: .east))

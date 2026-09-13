@@ -10,11 +10,3 @@ enum AttemptOutcome: Equatable {
         return .playing
     }
 }
-
-enum RouteCatalog {
-    static let pageSize = 12
-
-    static func upperBound(current: Int, best: [String: Int], saved: Int?) -> Int {
-        max(pageSize, current + 1, (best.keys.compactMap(Int.init).max() ?? -1) + 1, saved ?? 0)
-    }
-}

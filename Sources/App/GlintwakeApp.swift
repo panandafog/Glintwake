@@ -2,9 +2,10 @@ import SwiftUI
 
 @main
 struct GlintwakeApp: App {
+    @StateObject private var game = GameStore()
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(game: game)
                 .preferredColorScheme(.dark)
                 #if os(macOS)
                 .frame(minWidth: 340, minHeight: 500)

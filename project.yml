@@ -26,6 +26,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.panandafog.glintwake
+        CURRENT_PROJECT_VERSION: 3
         TARGETED_DEVICE_FAMILY: '1,2'
         SDKROOT: auto
         SUPPORTED_PLATFORMS: iphoneos iphonesimulator macosx
@@ -36,7 +37,8 @@ targets:
         'LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]': $(inherited) @executable_path/../Frameworks
         'INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphone*]': YES
         'INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphone*]': YES
-        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown
         ENABLE_HARDENED_RUNTIME: YES
         ENABLE_APP_SANDBOX: YES
   GlintwakeUITests:

@@ -24,7 +24,7 @@ run `xcodegen generate` (XcodeGen is only a development tool).
 - Gold crystals are collected along the entire path and do not stop movement.
 - Collect all crystals, then enter the exit. It catches you once activated.
 - Red hazards end an attempt, including after collecting the last crystal.
-- From route 3, arm **Brake** before a move to travel exactly one cell. One charge per attempt.
+- On medium and hard difficulty, arm **Brake** before a move to travel exactly one cell. One charge per attempt.
 - Undo restores the complete previous state, including crystals and the brake.
 - A level is passed only by collecting every crystal and reaching the exit within
   the **minimum move count**, computed by the solver for that board. Braking counts
@@ -34,9 +34,16 @@ run `xcodegen generate` (XcodeGen is only a development tool).
   otherwise it asks you to undo.
 - Mac: Q W E / A D / Z X C; arrow keys for cardinal moves; B toggles the brake.
 
-Progress, your current sequence of moves, opened levels, and completions are saved
-locally. Existing saves remain compatible: old results exceeding the minimum no
-longer receive completion checkmarks, but their levels and stored scores are retained.
+Only the current board, its move history, a one-time completion flag, and solved
+counts for each difficulty are saved locally. The actual board is stored, so a
+generator update cannot replace an unfinished puzzle. Undoing or restarting a
+completed board never increments the count again. Switching difficulty or choosing
+**Another puzzle** replaces the board without incrementing any count.
+
+A v1 save migrates its current board and moves. Its initial mode is estimated from
+the old minimum move count; the old board can differ from the new mode's profile.
+Historical completions are not assigned to difficulties that did not exist yet:
+the three new counters start at zero. The original v1 save is retained as a backup.
 Russian and English use standard `Resources/en.lproj/Localizable.strings` and
 `Resources/ru.lproj/Localizable.strings` resources, selected by the system/app language.
 Formatted values have complete localized format strings, including accessibility labels.
@@ -44,7 +51,7 @@ Formatted values have complete localized format strings, including accessibility
 The play screen does not scroll: the board fits the space remaining after controls,
 with a side-by-side arrangement in wide windows. Instructions live in Help.
 The native Mac window starts at 420×640 and can shrink to 340×500 points.
-Only the help and route picker sheets scroll.
+Only the help and difficulty picker sheets scroll.
 
 ## Audio
 
@@ -61,21 +68,30 @@ are no third-party audio licenses or attribution requirements. Regenerate them w
 
 ## MVP scope
 
-Three authored introductory levels and deterministic generated levels after them.
-The picker starts with twelve entries; **Add 12 levels** expands it without leaving
-the picker. All opened and previously completed levels remain available for replay,
-including generated levels beyond the first twelve. Opening the picker scrolls to
-the current level. Levels are identified by number only.
+There is no numbered campaign or level catalog. Choose a difficulty and solve an
+endless stream of locally generated puzzles. After a win the next board is prepared
+in the background; **Next level** opens it. Generation never blocks the play screen
+when changing difficulty or requesting another puzzle.
 
-New fields are constructed locally and validated with a breadth-first solver.
-The same level number gives the same board for this version. The generator has a bounded retry count and a known-solvable fallback.
+| Difficulty | Crystals | Minimum solution | Brake | Mean safe choices on the solved route |
+| --- | --- | --- | --- | --- |
+| Easy | 2 | 3–6 moves | No | ≥ 1 |
+| Medium | 4 | 7–10 moves | One | ≥ 2.5 |
+| Hard | 5 | 11–16 moves | One | ≥ 4 |
+
+All boards stay 7×7. The generator checks exact shortest paths with breadth-first
+search and filters by distinct safe continuations along an optimal route. This is
+a first difficulty heuristic, not a calibrated prediction of human solving time.
+Hard puzzles use longer construction walks and a larger candidate budget. Search
+is bounded and each mode has a fixed, solver-verified fallback within its profile.
+The legacy numbered generator remains solely for save migration and regression tests.
 No server, account, ads, analytics, purchases, or third-party runtime dependencies.
 
 The movement engine and generator are original Swift implementations. The initial
 mechanical reference is [Inertia from Simon Tatham's collection](https://www.chiark.greenend.org.uk/~sgtatham/puzzles/doc/inertia.html).
 
 This is a proof of concept, not an App Store submission package. Remaining product
-work includes playtesting and difficulty progression, broader accessibility and
+work includes playtesting and difficulty calibration, broader accessibility and
 device testing, final localization, store metadata, and release signing. The
 current generator guarantees solvability, not a unique or aesthetically ideal route.
 
@@ -87,16 +103,12 @@ xcodebuild -project Glintwake.xcodeproj -scheme Glintwake \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
 ```
 
-Core checks cover sliding, stopping, diagonals, hazards after the final crystal,
-locked/active exits, brake use, all 12 starter routes, and deterministic generation
-and solvability across 32 additional seeds. UI tests play the first route,
-undo, request a hint, win, advance, change level, and restore a brake by undo.
-They also exercise a board swipe and restore an unfinished session after relaunch.
-Additional checks cover the optimal move budget, restoring an exhausted attempt,
-undoing a detour, completion marks, catalog expansion past twelve, and independent
-sound preferences across relaunch. iPhone direction buttons are 56×56 points.
-Russian portrait/landscape checks ensure that vertical swipes leave the board in
-place and that controls fit within the window without scrolling.
+Core checks cover the movement rules, legacy generation, 20 seeds per difficulty,
+profile-specific fallback boards, and completion credit across undo, restart,
+serialization, and puzzle replacement. UI tests cover the strict move limit,
+one-time counters, next puzzle, changing difficulty, skipping a puzzle, restoring
+the exact current board, sound preferences, and Russian portrait/landscape layouts.
+iPhone direction buttons remain 56×56 points; the play screen never scrolls.
 
 Source layout:
 

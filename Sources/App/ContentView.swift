@@ -1,11 +1,11 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var game = GameStore()
+    @ObservedObject var game: GameStore
     @ObservedObject private var audio = AudioController.shared
     @Environment(\.scenePhase) private var scenePhase
     @State private var showAudio = false
-    @State private var showLevels = false
+    @State private var showDifficulty = false
     @State private var showHelp = false
     @State private var confirmRestart = false
 
@@ -38,7 +38,15 @@ struct ContentView: View {
             }
         }
         .foregroundStyle(.white)
-        .sheet(isPresented: $showLevels) { levelPicker }
+        .disabled(game.isGenerating)
+        .overlay {
+            if game.isGenerating {
+                ProgressView("Game.Generating".localized)
+                    .padding(24).background(Palette.panel, in: RoundedRectangle(cornerRadius: 20))
+                    .accessibilityIdentifier("generating")
+            }
+        }
+        .sheet(isPresented: $showDifficulty) { difficultyPicker }
         .sheet(isPresented: $showHelp) { help }
         .sheet(isPresented: $showAudio) { audioSettings }
         .onChange(of: scenePhase, initial: true) { _, phase in audio.setActive(phase == .active) }
@@ -55,17 +63,16 @@ struct ContentView: View {
             Text("App.Name".localized.uppercased()).font(.system(size: 13, weight: .bold, design: .monospaced))
                 .tracking(3).foregroundStyle(Palette.mint)
             Spacer(minLength: 8)
-            Button { showLevels = true } label: {
+            Button { showDifficulty = true } label: {
                 HStack(spacing: 8) {
-                    Image(systemName: "square.grid.2x2")
-                    Text(String(format: "%02d", game.level.id + 1)).monospacedDigit()
+                    Text(game.difficulty.titleKey.localized).lineLimit(1).minimumScaleFactor(0.8)
                     Image(systemName: "chevron.down").font(.system(size: 9, weight: .bold))
                 }
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Palette.mint)
                 .padding(.horizontal, 12).frame(height: 44)
                 .background(Palette.mint.opacity(0.08), in: Capsule())
-            }.buttonStyle(.plain).accessibilityIdentifier("levels")
+            }.buttonStyle(.plain).accessibilityIdentifier("difficulty")
             Button { showHelp = true } label: {
                 Image(systemName: "questionmark").font(.system(size: 15, weight: .semibold))
                     .frame(width: 44, height: 44).background(Palette.panel, in: Circle())
@@ -215,46 +222,41 @@ struct ContentView: View {
         return keys[d.rawValue].localized
     }
 
-    private var levelPicker: some View {
+    private var difficultyPicker: some View {
         NavigationStack {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        Text("Routes.Description".localized)
-                            .foregroundStyle(Palette.secondary)
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 90))], spacing: 12) {
-                            ForEach(0..<game.availableCount, id: \.self) { id in
-                                Button {
-                                    game.select(id)
-                                    showLevels = false
-                                } label: {
-                                    VStack(spacing: 9) {
-                                        Text(String(format: "%02d", id + 1)).font(.system(size: 27, weight: .medium, design: .rounded))
-                                        Image(systemName: game.completed.contains(id) ? "checkmark.circle.fill" : id < 3 ? "sparkle" : "circle.dotted")
-                                            .foregroundStyle(Palette.mint)
-                                    }.frame(maxWidth: .infinity).frame(height: 90)
-                                }
-                                .buttonStyle(SoftButton(highlighted: game.level.id == id))
-                                .accessibilityIdentifier("level-\(id)")
-                                .accessibilityLabel((game.completed.contains(id) ? "Routes.CompletedLevel" : "Routes.Level").localized(id + 1))
-                                .id(id)
-                            }
-                        }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Difficulty.Description".localized).font(.callout).foregroundStyle(Palette.secondary)
+                    ForEach(Difficulty.allCases, id: \.self) { mode in
                         Button {
-                            game.revealMore()
+                            if mode != game.difficulty { game.newPuzzle(mode) }
+                            showDifficulty = false
                         } label: {
-                            Label("Button.MoreLevels".localized(RouteCatalog.pageSize), systemImage: "sparkles").frame(maxWidth: .infinity)
-                        }.buttonStyle(SoftButton(highlighted: true)).accessibilityIdentifier("explore")
-                    }.padding(22)
-                }
-                .background(Palette.background)
-                .onAppear { proxy.scrollTo(game.level.id, anchor: .center) }
-                .onChange(of: game.availableCount) { old, _ in proxy.scrollTo(old, anchor: .top) }
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack {
+                                    Text(mode.titleKey.localized).font(.headline)
+                                    Spacer()
+                                    Text("Difficulty.Count".localized(game.count(mode)))
+                                        .monospacedDigit().accessibilityIdentifier("count-\(mode.rawValue)")
+                                }
+                                Text("Difficulty.\(mode.rawValue).Detail".localized).font(.caption)
+                            }.frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(SoftButton(highlighted: mode == game.difficulty))
+                        .accessibilityIdentifier("mode-\(mode.rawValue)")
+                    }
+                    Button {
+                        game.newPuzzle()
+                        showDifficulty = false
+                    } label: {
+                        Label("Button.OtherPuzzle".localized, systemImage: "shuffle").frame(maxWidth: .infinity)
+                    }.buttonStyle(SoftButton()).accessibilityIdentifier("other-puzzle")
+                }.padding(20)
             }
-            .navigationTitle("Routes.Title".localized)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Button.Done".localized) { showLevels = false } } }
-        }
-        .frame(minWidth: 300, idealWidth: 420, minHeight: 340, idealHeight: 450)
+            .background(Palette.background)
+            .navigationTitle("Difficulty.Title".localized)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Button.Done".localized) { showDifficulty = false } } }
+        }.frame(minWidth: 300, idealWidth: 420, minHeight: 340, idealHeight: 460)
     }
 
     private var help: some View {
@@ -317,7 +319,7 @@ struct ContentView: View {
             Button("") { game.move(.south) }.keyboardShortcut(.downArrow, modifiers: [])
             Button("") { game.move(.west) }.keyboardShortcut(.leftArrow, modifiers: [])
             Button("") { game.toggleBrake() }.keyboardShortcut("b", modifiers: [])
-        }.hidden().disabled(showHelp || showLevels || showAudio || confirmRestart)
+        }.hidden().disabled(showHelp || showDifficulty || showAudio || confirmRestart)
     }
     #endif
 }
