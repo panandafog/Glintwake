@@ -197,7 +197,7 @@ struct ContentView: View {
                 .accessibilityIdentifier(game.won ? "victory" : game.outcome == .exhausted ? "exhausted" : "defeat")
             Text(game.won ? "Result.Perfect".localized(game.moves) : game.outcome == .exhausted ? "Result.Budget".localized(game.level.par) : "Result.Undo".localized)
                 .font(.system(size: 12)).foregroundStyle(Palette.secondary)
-            Button { game.won ? game.next() : game.undo() } label: {
+            Button { game.won ? game.next() : game.restart() } label: {
                 Label(game.won ? "Button.NextRoute".localized : "Button.TryAgain".localized, systemImage: game.won ? "arrow.right" : "arrow.uturn.backward")
                     .frame(maxWidth: .infinity)
             }.buttonStyle(SoftButton(highlighted: true)).accessibilityIdentifier("result-action")
