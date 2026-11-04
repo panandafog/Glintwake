@@ -1,8 +1,7 @@
 # Glintwake
 
 A small, offline SwiftUI sliding puzzle for iPhone, iPad, and Mac. Gather the gold
-crystals, plan your stops, and reach the activated exit. One brake charge lets you
-make a single-cell move when momentum alone is not enough.
+crystals, plan your stops, and reach the activated exit using sliding moves.
 
 ## Run
 
@@ -24,15 +23,14 @@ run `xcodegen generate` (XcodeGen is only a development tool).
 - Gold crystals are collected along the entire path and do not stop movement.
 - Collect all crystals, then enter the exit. It catches you once activated.
 - Red hazards end an attempt, including after collecting the last crystal.
-- On medium and hard difficulty, arm **Brake** before a move to travel exactly one cell. One charge per attempt.
-- Undo restores the complete previous state, including crystals and the brake.
+- Undo restores the complete previous state, including collected crystals.
 - A level is passed only by collecting every crystal and reaching the exit within
-  the **minimum move count**, computed by the solver for that board. Braking counts
-  as one move; blocked input does not spend a move. The counter shows used/limit.
+  the **minimum move count**, computed by the solver for that board. Blocked input
+  does not spend a move. The counter shows used/limit.
 - Spending the last move without finishing ends the attempt. Undo or restart to retry.
 - Hint shows a shortest remaining step only if the solution still fits the budget;
   otherwise it asks you to undo.
-- Mac: Q W E / A D / Z X C; arrow keys for cardinal moves; B toggles the brake.
+- Mac: Q W E / A D / Z X C; arrow keys for cardinal moves.
 
 Only the current board, its move history, a one-time completion flag, and solved
 counts for each difficulty are saved locally. The actual board is stored, so a
@@ -40,10 +38,13 @@ generator update cannot replace an unfinished puzzle. Undoing or restarting a
 completed board never increments the count again. Switching difficulty or choosing
 **Another puzzle** replaces the board without incrementing any count.
 
-A v1 save migrates its current board and moves. Its initial mode is estimated from
-the old minimum move count; the old board can differ from the new mode's profile.
-Historical completions are not assigned to difficulties that did not exist yet:
-the three new counters start at zero. The original v1 save is retained as a backup.
+Old v1/v2 saves migrate to v3 sliding-only rules. An old attempt restarts from the
+beginning with a freshly solved minimum; if the old board is unsolvable without the
+removed ability, a validated board of the same difficulty replaces it. Solved counts
+are retained, and a retained board keeps its one-time completion flag. Older save
+data remains available as a backup. v1 history predates difficulty counters and is
+not assigned to them.
+
 Russian and English use standard `Resources/en.lproj/Localizable.strings` and
 `Resources/ru.lproj/Localizable.strings` resources, selected by the system/app language.
 Formatted values have complete localized format strings, including accessibility labels.
@@ -55,7 +56,7 @@ Only the help and difficulty picker sheets scroll.
 
 ## Audio
 
-Six original synthesized effects cover sliding, crystals, braking, undo, failure,
+Five original synthesized effects cover sliding, crystals, undo, failure,
 and victory. A quiet 48-second stereo ambient composition loops during play.
 **Sound** provides independent, persistent switches for effects and background music.
 Audio pauses when the app becomes inactive; iOS respects silent mode and audio
@@ -73,11 +74,11 @@ endless stream of locally generated puzzles. After a win the next board is prepa
 in the background; **Next level** opens it. Generation never blocks the play screen
 when changing difficulty or requesting another puzzle.
 
-| Difficulty | Crystals | Minimum solution | Brake | Mean safe choices on the solved route |
-| --- | --- | --- | --- | --- |
-| Easy | 2 | 3–6 moves | No | ≥ 1 |
-| Medium | 4 | 7–10 moves | One | ≥ 2.5 |
-| Hard | 5 | 11–16 moves | One | ≥ 4 |
+| Difficulty | Crystals | Minimum solution | Mean safe choices on the solved route |
+| --- | --- | --- | --- |
+| Easy | 2 | 3–6 moves | ≥ 1 |
+| Medium | 4 | 7–10 moves | ≥ 2 |
+| Hard | 5 | 11–16 moves | ≥ 2.8 |
 
 All boards stay 7×7. The generator checks exact shortest paths with breadth-first
 search and filters by distinct safe continuations along an optimal route. This is
@@ -105,7 +106,8 @@ xcodebuild -project Glintwake.xcodeproj -scheme Glintwake \
 
 Core checks cover the movement rules, legacy generation, 20 seeds per difficulty,
 profile-specific fallback boards, and completion credit across undo, restart,
-serialization, and puzzle replacement. UI tests cover the strict move limit,
+serialization, and puzzle replacement, plus migration of old movement rules.
+UI tests cover a full restart after exhausting the move limit, the strict move limit,
 one-time counters, next puzzle, changing difficulty, skipping a puzzle, restoring
 the exact current board, sound preferences, and Russian portrait/landscape layouts.
 iPhone direction buttons remain 56×56 points; the play screen never scrolls.

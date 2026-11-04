@@ -1,14 +1,11 @@
 /* Glintwake interface and accessibility strings. */
 
 "App.Name" = "Glintwake";
-"Brake.Armed" = "Armed";
-"Brake.Title" = "Brake";
 "Button.Done" = "Done";
 "Button.Hint" = "Hint";
 "Button.NextRoute" = "Next level";
 "Button.Play" = "Let's go";
 "Button.Restart" = "Restart";
-"Button.TryAgain" = "Try again";
 "Button.Undo" = "Undo";
 "Cell.Coordinates" = "Row %d, column %d";
 "Cell.Crystal" = "crystal";
@@ -25,7 +22,6 @@
 "Direction.SouthEast" = "Down right";
 "Direction.SouthWest" = "Down left";
 "Direction.West" = "Left";
-"Help.Brake.Title" = "One moment of control";
 "Help.Crystals.Body" = "Crystals are collected as you pass over them. Collect every crystal to activate the exit, then slide into it. A crystal alone will not stop you.";
 "Help.Crystals.Title" = "Gather, then leave";
 "Help.Direction.Body" = "Swipe in any of eight directions, or use the arrows. You keep sliding until a wall or a stop ring catches you. Diagonals cannot pass a wall corner.";
@@ -33,9 +29,8 @@
 "Help.Hazards.Body" = "Red hazards end a route, even after the last crystal. Undo is always available. There is no timer and no lives to lose.";
 "Help.Hazards.Title" = "Look before you drift";
 "Help.Intro" = "Drift with intention.";
-"Help.Keyboard" = "On Mac, use Q W E / A D / Z X C, or the arrow keys; B arms the brake.";
+"Help.Keyboard" = "On Mac, use Q W E / A D / Z X C, or the arrow keys.";
 "Help.Title" = "How to play";
-"Hint.Brake" = "Brake armed. Follow the highlighted arrow.";
 "Hint.Direction" = "Try the highlighted direction.";
 "Hint.NoRoute" = "No route from here. Undo a move or restart.";
 "Restart.Confirm" = "Restart this route?";
@@ -57,11 +52,10 @@
 "Difficulty.easy" = "Easy";
 "Difficulty.medium" = "Medium";
 "Difficulty.hard" = "Hard";
-"Difficulty.easy.Detail" = "2 crystals · 3–6 moves · no brake";
-"Difficulty.medium.Detail" = "4 crystals · 7–10 moves · one brake";
+"Difficulty.easy.Detail" = "2 crystals · 3–6 moves";
+"Difficulty.medium.Detail" = "4 crystals · 7–10 moves";
 "Difficulty.hard.Detail" = "5 crystals · 11–16 moves · more choices";
 "Difficulty.Count" = "Solved: %d";
 "Difficulty.Description" = "Each difficulty has its own solved count. Changing difficulty or choosing another puzzle replaces the current board. Only your current puzzle is saved.";
 "Button.OtherPuzzle" = "Another puzzle";
 "Game.Generating" = "Preparing a puzzle…";
-"Help.Brake.Body" = "Medium and hard puzzles give you one brake charge. Arm it before moving to travel exactly one cell. A blocked move does not spend the charge. Undo restores it.";

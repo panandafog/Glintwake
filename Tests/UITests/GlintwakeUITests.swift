@@ -2,6 +2,32 @@ import XCTest
 
 @MainActor
 final class GlintwakeUITests: XCTestCase {
+    func testRestartAfterExhaustionRestoresWholeBoard() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        XCTAssertTrue(app.buttons["direction-2"].waitForExistence(timeout: 10))
+        let initial = app.descendants(matching: .any).matching(identifier: "board").allElementsBoundByIndex.map(\.label)
+        for direction in [2, 6, 2] {
+            let button = app.buttons["direction-\(direction)"]
+            expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: button)
+            waitForExpectations(timeout: 3)
+            button.tap()
+        }
+        XCTAssertTrue(app.staticTexts["exhausted"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.buttons["result-action"].label, "Restart")
+        app.buttons["result-action"].tap()
+        XCTAssertFalse(app.buttons["undo"].isEnabled)
+        XCTAssertFalse(app.staticTexts["exhausted"].exists)
+        XCTAssertEqual(initial, app.descendants(matching: .any).matching(identifier: "board").allElementsBoundByIndex.map(\.label))
+        app.terminate()
+        app.launchArguments.append("--keep-test-session")
+        app.launch()
+        XCTAssertTrue(app.buttons["direction-2"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["undo"].isEnabled)
+        XCTAssertEqual(initial, app.descendants(matching: .any).matching(identifier: "board").allElementsBoundByIndex.map(\.label))
+    }
+
     func testMoveBudgetFailureUndoAndOptimalCompletion() throws {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
@@ -64,7 +90,7 @@ final class GlintwakeUITests: XCTestCase {
         app.buttons["mode-hard"].tap()
         expectation(for: NSPredicate(format: "label CONTAINS 'Hard' AND enabled == true"), evaluatedWith: app.buttons["difficulty"])
         waitForExpectations(timeout: 60)
-        XCTAssertTrue(app.buttons["brake"].exists)
+        XCTAssertFalse(app.buttons["brake"].exists)
         let before = app.descendants(matching: .any).matching(identifier: "board").allElementsBoundByIndex.map(\.label)
         app.terminate()
         app.launchArguments.append("--keep-test-session")
@@ -175,7 +201,7 @@ final class GlintwakeUITests: XCTestCase {
         app.buttons["mode-medium"].tap()
         expectation(for: NSPredicate(format: "label CONTAINS 'Medium' AND enabled == true"), evaluatedWith: app.buttons["difficulty"])
         waitForExpectations(timeout: 30)
-        XCTAssertTrue(app.buttons["brake"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["brake"].exists)
         app.buttons["hint"].tap()
         XCTAssertTrue(app.staticTexts["guidance"].exists)
     }

@@ -36,19 +36,11 @@ import Testing
     #expect(next.position.collected == 1)
 }
 
-@Test func blockedMoveDoesNotSpendBrake() {
+@Test func blockedMoveDoesNotChangePosition() {
     let level = Levels.make(2)
-    let next = Rules.move(level.initial, in: level, action: Action(direction: .north, brake: true))
+    let next = Rules.move(level.initial, in: level, action: Action(direction: .north))
     #expect(next.path.isEmpty)
     #expect(next.position == level.initial)
-}
-
-@Test func brakeIsOneCellAndSingleUse() {
-    let level = Levels.make(2)
-    let next = Rules.move(level.initial, in: level, action: Action(direction: .east, brake: true))
-    #expect(next.position.point == Point(x: 2, y: 1))
-    #expect(!next.position.brake)
-    #expect(Rules.move(next.position, in: level, action: Action(direction: .east, brake: true)).path.isEmpty)
 }
 
 @Test func lastCrystalDoesNotProtectFromHazard() {

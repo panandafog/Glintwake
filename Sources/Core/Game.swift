@@ -29,7 +29,6 @@ struct Level: Codable, Equatable, Sendable {
     let start: Point
     let exit: Point
     let gems: [Point]
-    let brake: Bool
     var par: Int
 
     func tile(at p: Point) -> Tile {
@@ -37,9 +36,9 @@ struct Level: Codable, Equatable, Sendable {
         return tiles[p.y * size + p.x]
     }
     var allGems: Int { (1 << gems.count) - 1 }
-    var initial: Position { Position(point: start, gems: 0, brake: brake, dead: false) }
+    var initial: Position { Position(point: start, gems: 0, dead: false) }
 
-    static func map(id: Int, rows: [String], brake: Bool = false) -> Level {
+    static func map(id: Int, rows: [String]) -> Level {
         precondition(!rows.isEmpty && rows.allSatisfy { $0.count == rows.count })
         var tiles: [Tile] = [], gems: [Point] = []
         var start: Point?, exit: Point?
@@ -53,14 +52,13 @@ struct Level: Codable, Equatable, Sendable {
             }
         }
         precondition(start != nil && exit != nil && gems.count < 16)
-        return Level(id: id, size: rows.count, tiles: tiles, start: start!, exit: exit!, gems: gems, brake: brake, par: 0)
+        return Level(id: id, size: rows.count, tiles: tiles, start: start!, exit: exit!, gems: gems, par: 0)
     }
 }
 
 struct Position: Hashable, Codable, Sendable {
     var point: Point
     var gems: Int
-    var brake: Bool
     var dead: Bool
     func won(_ level: Level) -> Bool { !dead && gems == level.allGems && point == level.exit }
     var collected: Int { gems.nonzeroBitCount }
@@ -68,7 +66,6 @@ struct Position: Hashable, Codable, Sendable {
 
 struct Action: Equatable, Codable, Sendable {
     let direction: Direction
-    var brake = false
 }
 
 struct Transition: Sendable {
@@ -80,7 +77,7 @@ enum Rules {
     /// Diagonals cannot squeeze past either of the two orthogonal wall corners.
     /// A locked exit behaves like floor; an unlocked exit catches the traveller.
     static func move(_ state: Position, in level: Level, action: Action) -> Transition {
-        guard !state.dead, !state.won(level), !action.brake || state.brake else {
+        guard !state.dead, !state.won(level) else {
             return Transition(position: state, path: [])
         }
         var result = state
@@ -98,15 +95,14 @@ enum Rules {
             path.append(next)
             if let i = level.gems.firstIndex(of: next) { result.gems |= 1 << i }
             if level.tile(at: next) == .hazard { result.dead = true; break }
-            if action.brake || level.tile(at: next) == .stop || result.won(level) { break }
+            if level.tile(at: next) == .stop || result.won(level) { break }
         }
-        if action.brake && !path.isEmpty { result.brake = false }
         return Transition(position: result, path: path)
     }
 }
 
 enum Solver {
-    /// Breadth-first search returns a shortest route, including the optional brake.
+    /// Breadth-first search returns a shortest route, using sliding moves.
     /// With 7x7 boards and at most five gems the state space is small and bounded.
     static func solve(_ level: Level, from initial: Position? = nil) -> [Action]? {
         let start = initial ?? level.initial
@@ -118,22 +114,20 @@ enum Solver {
         while head < queue.count {
             let state = queue[head]
             head += 1
-            for useBrake in state.brake ? [false, true] : [false] {
-                for direction in Direction.allCases {
-                    let action = Action(direction: direction, brake: useBrake)
-                    let next = Rules.move(state, in: level, action: action).position
-                    guard !next.dead, seen.insert(next).inserted else { continue }
-                    parents[next] = (state, action)
-                    if next.won(level) {
-                        var route: [Action] = [], cursor = next
-                        while let (previous, step) = parents[cursor] {
-                            route.append(step)
-                            cursor = previous
-                        }
-                        return route.reversed()
+            for direction in Direction.allCases {
+                let action = Action(direction: direction)
+                let next = Rules.move(state, in: level, action: action).position
+                guard !next.dead, seen.insert(next).inserted else { continue }
+                parents[next] = (state, action)
+                if next.won(level) {
+                    var route: [Action] = [], cursor = next
+                    while let (previous, step) = parents[cursor] {
+                        route.append(step)
+                        cursor = previous
                     }
-                    queue.append(next)
+                    return route.reversed()
                 }
+                queue.append(next)
             }
         }
         return nil

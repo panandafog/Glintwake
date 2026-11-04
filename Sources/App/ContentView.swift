@@ -118,18 +118,6 @@ struct ContentView: View {
                             Label("Audio.Title".localized, systemImage: audio.effectsEnabled || audio.ambienceEnabled ? "speaker.wave.2" : "speaker.slash")
                                 .font(.system(size: 12, weight: .medium))
                         }.buttonStyle(SoftButton()).accessibilityIdentifier("audio-settings")
-                        if game.level.brake {
-                            Button {
-                                game.toggleBrake()
-                            } label: {
-                                Label(game.brakeArmed ? "Brake.Armed".localized : "Brake.Title".localized, systemImage: "pause.circle")
-                                    .font(.system(size: 12, weight: .semibold))
-                            }
-                            .buttonStyle(SoftButton(highlighted: game.brakeArmed))
-                            .disabled(!game.position.brake || game.isAnimating)
-                            .opacity(game.position.brake ? 1 : 0.35)
-                            .accessibilityIdentifier("brake")
-                        }
                         if !game.message.isEmpty {
                             Text(game.message)
                                 .font(.system(size: 11)).foregroundStyle(Palette.gold)
@@ -205,7 +193,7 @@ struct ContentView: View {
             Text(game.won ? "Result.Perfect".localized(game.moves) : game.outcome == .exhausted ? "Result.Budget".localized(game.level.par) : "Result.Undo".localized)
                 .font(.system(size: 12)).foregroundStyle(Palette.secondary)
             Button { game.won ? game.next() : game.restart() } label: {
-                Label(game.won ? "Button.NextRoute".localized : "Button.TryAgain".localized, systemImage: game.won ? "arrow.right" : "arrow.uturn.backward")
+                Label(game.won ? "Button.NextRoute".localized : "Button.Restart".localized, systemImage: game.won ? "arrow.right" : "arrow.counterclockwise")
                     .frame(maxWidth: .infinity)
             }.buttonStyle(SoftButton(highlighted: true)).accessibilityIdentifier("result-action")
         }
@@ -269,7 +257,6 @@ struct ContentView: View {
                     helpRow("arrow.up.right", "Help.Direction.Title".localized, "Help.Direction.Body".localized, Palette.mint)
                     helpRow("diamond.fill", "Help.Crystals.Title".localized, "Help.Crystals.Body".localized, Palette.gold)
                     helpRow("burst.fill", "Help.Hazards.Title".localized, "Help.Hazards.Body".localized, Palette.coral)
-                    helpRow("pause.circle", "Help.Brake.Title".localized, "Help.Brake.Body".localized, Palette.mint)
                     Text("Help.Par.Body".localized)
                         .font(.system(size: 13)).foregroundStyle(Palette.secondary)
                     #if os(macOS)
@@ -318,7 +305,6 @@ struct ContentView: View {
             Button("") { game.move(.east) }.keyboardShortcut(.rightArrow, modifiers: [])
             Button("") { game.move(.south) }.keyboardShortcut(.downArrow, modifiers: [])
             Button("") { game.move(.west) }.keyboardShortcut(.leftArrow, modifiers: [])
-            Button("") { game.toggleBrake() }.keyboardShortcut("b", modifiers: [])
         }.hidden().disabled(showHelp || showDifficulty || showAudio || confirmRestart)
     }
     #endif

@@ -25,7 +25,7 @@ enum Levels {
         default:
             return generate(seed: UInt64(max(0, id)) &* 7919 &+ 42, id: id)
         }
-        var level = Level.map(id: id, rows: rows, brake: id == 2)
+        var level = Level.map(id: id, rows: rows)
         level.par = Solver.solve(level)?.count ?? 0
         return level
     }
@@ -34,7 +34,7 @@ enum Levels {
         if let level = candidate(seed: seed, id: id, difficulty: nil) { return level }
         let fallback = make(2)
         return Level(id: id, size: fallback.size, tiles: fallback.tiles, start: fallback.start,
-                     exit: fallback.exit, gems: fallback.gems, brake: fallback.brake, par: fallback.par)
+                     exit: fallback.exit, gems: fallback.gems, par: fallback.par)
     }
 
     static func candidate(seed: UInt64, id: Int, difficulty: Difficulty?) -> Level? {
@@ -55,7 +55,7 @@ enum Levels {
             // Walk the directed movement graph first. Gems and exit are then placed
             // on a witnessed safe route, before checking the exact final rules.
             let base = Level(id: id, size: size, tiles: tiles, start: start,
-                             exit: Point(x: -1, y: -1), gems: [], brake: false, par: 0)
+                             exit: Point(x: -1, y: -1), gems: [], par: 0)
             var state = base.initial
             var visited: [Point] = []
             for _ in 0..<(difficulty == .hard ? 32 : 16) {
@@ -71,7 +71,7 @@ enum Levels {
             guard exit != start, choices.count >= 5 else { continue }
             var gems: [Point] = []
             for _ in 0..<(difficulty?.crystals ?? 4) { gems.append(choices.remove(at: rng.number(choices.count))) }
-            var level = Level(id: id, size: size, tiles: tiles, start: start, exit: exit, gems: gems, brake: difficulty != .easy, par: 0)
+            var level = Level(id: id, size: size, tiles: tiles, start: start, exit: exit, gems: gems, par: 0)
             guard let solution = Solver.solve(level), (difficulty?.moves ?? 5...16).contains(solution.count) else { continue }
             if let difficulty {
                 let choices = PuzzleQuality.meanChoices(level, solution: solution)

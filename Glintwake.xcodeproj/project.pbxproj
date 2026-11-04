@@ -21,7 +21,6 @@
 		4C68BA0AC95F7D907B2AB875 /* BoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29FB5BCFA966DE4E2C1E7A05 /* BoardView.swift */; };
 		8D5898EC823E587B96C07BA8 /* Attempt.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1264538B6426B6803E1EC90 /* Attempt.swift */; };
 		A808ADFD75FDD0E64DEE1078 /* AudioController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD83C65002BBF544F7D625D7 /* AudioController.swift */; };
-		B1C3C089E809E264C69F9DC1 /* brake.wav in Resources */ = {isa = PBXBuildFile; fileRef = 918847B22F1A0887DE6BFE18 /* brake.wav */; };
 		D23A805DD47944484E8AB6A6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 46C5AF0857B577E7BA29E4C7 /* Assets.xcassets */; };
 		D3EE58B28978394680EBB4A3 /* Difficulty.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFCDBE7058532D9500D33B1C /* Difficulty.swift */; };
 		D73BAB5C62987E9D3D07507D /* ambience.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9E4085B3292E733268CC59E4 /* ambience.wav */; };
@@ -50,7 +49,6 @@
 		753E435EEF9B68A98162891A /* String+Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Localization.swift"; sourceTree = "<group>"; };
 		7671E045187C308951BBB0D0 /* undo.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = undo.wav; sourceTree = "<group>"; };
 		85009BF6C994D32579910E8A /* Levels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Levels.swift; sourceTree = "<group>"; };
-		918847B22F1A0887DE6BFE18 /* brake.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = brake.wav; sourceTree = "<group>"; };
 		94201AFAF8E56E25B3E80E34 /* Game.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Game.swift; sourceTree = "<group>"; };
 		9E4085B3292E733268CC59E4 /* ambience.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ambience.wav; sourceTree = "<group>"; };
 		AD83C65002BBF544F7D625D7 /* AudioController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioController.swift; sourceTree = "<group>"; };
@@ -120,7 +118,6 @@
 			isa = PBXGroup;
 			children = (
 				9E4085B3292E733268CC59E4 /* ambience.wav */,
-				918847B22F1A0887DE6BFE18 /* brake.wav */,
 				6CE12689517BC75423257164 /* crystal.wav */,
 				EC5A1B65A83B614C759D384B /* failure.wav */,
 				4325FF7E657EB15301E549DB /* slide.wav */,
@@ -247,7 +244,6 @@
 				D23A805DD47944484E8AB6A6 /* Assets.xcassets in Resources */,
 				FD6BA0075623F1921CBDB884 /* Localizable.strings in Resources */,
 				D73BAB5C62987E9D3D07507D /* ambience.wav in Resources */,
-				B1C3C089E809E264C69F9DC1 /* brake.wav in Resources */,
 				4AAE40FD6761024836F7BB5B /* crystal.wav in Resources */,
 				15C18933651C97109CDC78E3 /* failure.wav in Resources */,
 				2A0F95BA11DC2AA9CDD4B228 /* slide.wav in Resources */,

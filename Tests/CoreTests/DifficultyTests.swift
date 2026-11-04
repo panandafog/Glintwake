@@ -12,7 +12,6 @@ import Testing
             #expect(solution.count == level.par)
             #expect(difficulty.moves.contains(level.par))
             #expect(level.gems.count == difficulty.crystals)
-            #expect(level.brake == (difficulty != .easy))
             #expect(PuzzleQuality.meanChoices(level, solution: solution) >= difficulty.minimumChoices)
             #expect(solution.reduce(level.initial) { Rules.move($0, in: level, action: $1).position }.won(level))
             boards.insert(level.tiles)
@@ -57,4 +56,29 @@ import Testing
     session.replace(with: Difficulty.medium.fallback, difficulty: .medium)
     #expect(session.counts == ["easy": 1, "hard": 1])
     #expect(session.actions.isEmpty && !session.credited)
+}
+
+@Test func oldSessionsRestartWithValidatedSlidingRules() throws {
+    var old = PuzzleSession(level: Levels.make(0), difficulty: .easy,
+                            actions: [Action(direction: .east)], counts: ["easy": 9], credited: true)
+    old.level.par = 1 // A legacy limit computed with different movement rules.
+    var json = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(old)) as? [String: Any])
+    var board = try #require(json["level"] as? [String: Any])
+    board["brake"] = true
+    json["level"] = board
+    json["actions"] = [["direction": 2, "brake": true]]
+    let decoded = try JSONDecoder().decode(PuzzleSession.self, from: JSONSerialization.data(withJSONObject: json))
+    let migrated = decoded.migratingToSlidingOnly()
+    #expect(migrated.actions.isEmpty)
+    #expect(migrated.position == migrated.level.initial)
+    #expect(migrated.level.par == 3)
+    #expect(migrated.counts == ["easy": 9] && migrated.credited)
+    // An old board requiring a removed ability must not remain in play.
+    old.level = Level.map(id: 7, rows: ["#####", "#S#E#", "#####", "#.*.#", "#####"])
+    old.difficulty = .hard
+    let replaced = old.migratingToSlidingOnly()
+    #expect(replaced.level == Difficulty.hard.fallback)
+    #expect(replaced.actions.isEmpty && !replaced.credited)
+    #expect(replaced.counts == ["easy": 9])
+    #expect(Solver.solve(replaced.level)?.count == replaced.level.par)
 }

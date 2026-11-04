@@ -4,7 +4,7 @@ import SwiftUI
 @MainActor
 final class AudioController: ObservableObject {
     static let shared = AudioController()
-    enum Effect: String, CaseIterable { case slide, crystal, brake, undo, failure, win }
+    enum Effect: String, CaseIterable { case slide, crystal, undo, failure, win }
 
     @Published var effectsEnabled: Bool {
         didSet {

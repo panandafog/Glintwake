@@ -1,15 +1,12 @@
 /* Glintwake interface and accessibility strings. */
 
 "App.Name" = "Glintwake";
-"Brake.Armed" = "Включён";
-"Brake.Title" = "Тормоз";
 "Button.Done" = "Готово";
 "Button.Hint" = "Подсказка";
 "Button.NextRoute" = "Следующий уровень";
 "Button.Play" = "Поехали";
 "Button.Restart" = "Заново";
-"Button.TryAgain" = "Попробовать снова";
-"Button.Undo" = "Назад";
+"Button.Undo" = "Отменить ход";
 "Cell.Coordinates" = "Ряд %d, столбец %d";
 "Cell.Crystal" = "кристалл";
 "Cell.Exit" = "выход";
@@ -25,7 +22,6 @@
 "Direction.SouthEast" = "Вниз вправо";
 "Direction.SouthWest" = "Вниз влево";
 "Direction.West" = "Влево";
-"Help.Brake.Title" = "Один момент контроля";
 "Help.Crystals.Body" = "Кристаллы собираются по пути и не останавливают движение. Собери все, чтобы активировать выход, и доберись до него.";
 "Help.Crystals.Title" = "Собери и доберись до выхода";
 "Help.Direction.Body" = "Свайпай в одном из восьми направлений или нажимай стрелки. Ты скользишь до стены или кольца остановки. По диагонали нельзя срезать угол стены.";
@@ -33,9 +29,8 @@
 "Help.Hazards.Body" = "Красные ловушки завершают попытку, даже после последнего кристалла. Ход всегда можно отменить. Таймера и ограниченных жизней нет.";
 "Help.Hazards.Title" = "Сначала посмотри";
 "Help.Intro" = "Каждый ход — с намерением.";
-"Help.Keyboard" = "На Mac: Q W E / A D / Z X C или стрелки; B включает тормоз.";
+"Help.Keyboard" = "На Mac: Q W E / A D / Z X C или стрелки.";
 "Help.Title" = "Как играть";
-"Hint.Brake" = "Тормоз включён. Нажми подсвеченную стрелку.";
 "Hint.Direction" = "Попробуй подсвеченное направление.";
 "Hint.NoRoute" = "Отсюда пути нет. Отмени ход или начни заново.";
 "Restart.Confirm" = "Начать маршрут заново?";
@@ -57,11 +52,10 @@
 "Difficulty.easy" = "Лёгкая";
 "Difficulty.medium" = "Средняя";
 "Difficulty.hard" = "Сложная";
-"Difficulty.easy.Detail" = "2 кристалла · 3–6 ходов · без тормоза";
-"Difficulty.medium.Detail" = "4 кристалла · 7–10 ходов · один тормоз";
+"Difficulty.easy.Detail" = "2 кристалла · 3–6 ходов";
+"Difficulty.medium.Detail" = "4 кристалла · 7–10 ходов";
 "Difficulty.hard.Detail" = "5 кристаллов · 11–16 ходов · больше вариантов";
 "Difficulty.Count" = "Пройдено: %d";
 "Difficulty.Description" = "У каждой сложности свой счётчик побед. Смена сложности или выбор другого поля заменяет текущую головоломку. Сохраняется только текущее поле.";
 "Button.OtherPuzzle" = "Другое поле";
 "Game.Generating" = "Готовим головоломку…";
-"Help.Brake.Body" = "На средней и сложной сложности доступен один заряд тормоза. Включи его перед ходом, чтобы пройти ровно одну клетку. Ход в стену заряд не тратит. Отмена хода возвращает заряд.";

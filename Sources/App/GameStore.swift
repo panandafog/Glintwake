@@ -9,14 +9,13 @@ final class GameStore: ObservableObject {
     var difficulty: Difficulty { session.difficulty }
     @Published private(set) var position: Position
     private var prepared: Task<Level, Never>?
-    @Published var brakeArmed = false
     @Published var hint: Action?
     @Published var message = ""
     @Published var trail: [Point] = []
     @Published private(set) var isAnimating = false
     private var animationTask: Task<Void, Never>?
     private let defaults: UserDefaults
-    private let saveKey = "glintwake.session.v2"
+    private let saveKey = "glintwake.session.v3"
 
     struct LegacySave: Codable {
         var levelID: Int
@@ -36,13 +35,15 @@ final class GameStore: ObservableObject {
         if let data = defaults.data(forKey: saveKey),
            let saved = try? JSONDecoder().decode(PuzzleSession.self, from: data) {
             restored = saved
+        } else if let data = defaults.data(forKey: "glintwake.session.v2"),
+                  let old = try? JSONDecoder().decode(PuzzleSession.self, from: data) {
+            restored = old.migratingToSlidingOnly()
         } else if let data = defaults.data(forKey: "glintwake.session.v1"),
                   let old = try? JSONDecoder().decode(LegacySave.self, from: data) {
             let level = Levels.make(min(max(old.levelID, 0), 1_000_000))
             let mode: Difficulty = level.par <= 6 ? .easy : level.par <= 10 ? .medium : .hard
             restored = PuzzleSession(level: level, difficulty: mode,
-                                    actions: Array(old.actions.prefix(1000)),
-                                    credited: old.best[String(old.levelID)] != nil)
+                                     credited: old.best[String(old.levelID)] != nil).migratingToSlidingOnly()
         } else {
             let level = testing ? Levels.make(0) : Levels.puzzle(seed: UInt64.random(in: 0...UInt64.max), difficulty: .easy)
             restored = PuzzleSession(level: level, difficulty: .easy)
@@ -61,14 +62,13 @@ final class GameStore: ObservableObject {
 
     func move(_ direction: Direction) {
         guard !isAnimating, !isGenerating, !finished else { return }
-        let action = Action(direction: direction, brake: brakeArmed)
+        let action = Action(direction: direction)
         let next = Rules.move(position, in: level, action: action)
         guard !next.path.isEmpty else { return }
         trail = [position.point] + next.path
         let collected = next.position.collected > position.collected
         position = next.position
         session.actions.append(action)
-        brakeArmed = false
         hint = nil
         message = ""
         isAnimating = true
@@ -76,7 +76,7 @@ final class GameStore: ObservableObject {
             session.creditCompletion()
             if prepared == nil { prepared = generate(difficulty) }
         }
-        AudioController.shared.play(won ? .win : finished ? .failure : collected ? .crystal : action.brake ? .brake : .slide)
+        AudioController.shared.play(won ? .win : finished ? .failure : collected ? .crystal : .slide)
         persist()
         animationTask?.cancel()
         animationTask = Task { [weak self] in
@@ -127,14 +127,6 @@ final class GameStore: ObservableObject {
 
     func next() { guard won else { return }; newPuzzle() }
 
-    func toggleBrake() {
-        guard !isGenerating, position.brake, !finished, !isAnimating else { return }
-        brakeArmed.toggle()
-        hint = nil
-        message = ""
-        AudioController.shared.play(.brake)
-    }
-
     func showHint() {
         guard !isGenerating, !finished, !isAnimating else { return }
         if let solution = Solver.solve(level, from: position), let step = solution.first {
@@ -144,8 +136,7 @@ final class GameStore: ObservableObject {
                 return
             }
             hint = step
-            brakeArmed = step.brake
-            message = step.brake ? "Hint.Brake".localized : "Hint.Direction".localized
+            message = "Hint.Direction".localized
         } else {
             hint = nil
             message = "Hint.NoRoute".localized
@@ -155,7 +146,6 @@ final class GameStore: ObservableObject {
     private func clearTransient() {
         animationTask?.cancel()
         isAnimating = false
-        brakeArmed = false
         hint = nil
         message = ""
         trail = []
