@@ -97,7 +97,12 @@ collection-order assessment (`RouteAssessment`):
 These are targeted tests against obvious collection strategies, not a calibrated
 prediction of human solving time. New filters apply to newly generated boards;
 saved current boards are restored as before.
-Hard puzzles use longer construction walks and a larger candidate budget. Search
+Hard puzzles use longer construction walks and a larger candidate budget. For each
+new hard puzzle, the generator privately chooses a desired length uniformly from
+11–16 before searching. It searches up to four batches of 1,800 layouts, returning
+an exact length match when found, otherwise the closest validated board. This
+reduces the bias toward eleven-move puzzles without requiring player settings or
+changing the minimum-move rule. Rare lengths are not guaranteed equal frequency. Search
 is bounded and each mode has a fixed, solver-verified fallback within its profile,
 including the collection-order requirements.
 The legacy numbered generator remains solely for save migration and regression tests.
@@ -121,6 +126,7 @@ xcodebuild -project Glintwake.xcodeproj -scheme Glintwake \
 
 Core checks cover the movement rules, legacy generation, 20 seeds per difficulty,
 rejection of obvious routes, exact order penalties, rotation and gem-order invariance,
+a 40-seed check against concentration at eleven moves,
 profile-specific fallback boards, and completion credit across undo, restart,
 serialization, and puzzle replacement, plus migration of old movement rules.
 UI tests cover a full restart after exhausting the move limit, the strict move limit,

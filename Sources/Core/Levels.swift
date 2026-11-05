@@ -37,8 +37,9 @@ enum Levels {
                      exit: fallback.exit, gems: fallback.gems, par: fallback.par)
     }
 
-    static func candidate(seed: UInt64, id: Int, difficulty: Difficulty?) -> Level? {
+    static func candidate(seed: UInt64, id: Int, difficulty: Difficulty?, preferredMoves: Int? = nil) -> Level? {
         var rng = SeededRandom(state: seed)
+        var best: Level?
         for _ in 0..<(difficulty == .hard ? 1800 : 180) {
             let size = 7
             var tiles = [Tile](repeating: .floor, count: size * size)
@@ -73,6 +74,8 @@ enum Levels {
             for _ in 0..<(difficulty?.crystals ?? 4) { gems.append(choices.remove(at: rng.number(choices.count))) }
             var level = Level(id: id, size: size, tiles: tiles, start: start, exit: exit, gems: gems, par: 0)
             guard let solution = Solver.solve(level), (difficulty?.moves ?? 5...16).contains(solution.count) else { continue }
+            if let target = preferredMoves, let best,
+               abs(solution.count - target) >= abs(best.par - target) { continue }
             if let difficulty {
                 let choices = PuzzleQuality.meanChoices(level, solution: solution)
                 guard choices >= difficulty.minimumChoices else { continue }
@@ -81,15 +84,36 @@ enum Levels {
                 }
             }
             level.par = solution.count
-            return level
+            if let target = preferredMoves, level.par != target {
+                best = level
+            } else {
+                return level
+            }
         }
-        return nil
+        return best
     }
 
     static func puzzle(seed: UInt64, difficulty: Difficulty) -> Level {
+        if difficulty == .hard { return balancedHardPuzzle(seed: seed) }
         for offset in 0..<8 {
             if let level = candidate(seed: seed &+ UInt64(offset), id: 0, difficulty: difficulty) { return level }
         }
         return difficulty.fallback
+    }
+
+    /// Choose a desired length before searching, rather than accepting the most
+    /// common length. A fixed search budget keeps generation bounded; if an exact
+    /// match is rare, use the nearest fully validated candidate we actually found.
+    private static func balancedHardPuzzle(seed: UInt64) -> Level {
+        var rng = SeededRandom(state: seed)
+        let target = Difficulty.hard.moves.lowerBound + rng.number(Difficulty.hard.moves.count)
+        var best: Level?
+        for _ in 0..<4 {
+            guard let level = candidate(seed: rng.next(), id: 0, difficulty: .hard, preferredMoves: target) else { continue }
+            if level.par == target { return level }
+            if let previous = best, abs(level.par - target) >= abs(previous.par - target) { continue }
+            best = level
+        }
+        return best ?? Difficulty.hard.fallback
     }
 }

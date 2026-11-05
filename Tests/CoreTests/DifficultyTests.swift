@@ -86,3 +86,30 @@ import Testing
     #expect(replaced.counts == ["easy": 9])
     #expect(Solver.solve(replaced.level)?.count == replaced.level.par)
 }
+
+@Test func hardLengthsDoNotCollapseToTheLowerBound() throws {
+    var rng = SeededRandom(state: 20261106)
+    var counts: [Int: Int] = [:]
+    for _ in 0..<40 {
+        let level = Levels.puzzle(seed: rng.next(), difficulty: .hard)
+        counts[level.par, default: 0] += 1
+        #expect(Difficulty.hard.moves.contains(level.par))
+        #expect(Solver.solve(level)?.count == level.par)
+        #expect(try #require(RouteAssessment.evaluate(level)).meets(.hard))
+    }
+    print("BALANCED HARD", counts.sorted { $0.key < $1.key })
+    // Broad regression bounds, not exact quotas: the old first-match search
+    // produced 67% eleven-move boards on this seed stream.
+    #expect(counts[11, default: 0] <= 18)
+    #expect(counts.filter { $0.key >= 13 }.values.reduce(0, +) >= 10)
+    #expect(counts.count >= 3)
+}
+
+@Test func preferredLengthSearchKeepsTheRealShortestPath() throws {
+    // An already verified fallback is not a substitute for an adjusted move limit:
+    // candidate.par must always be the actual solver result, even on a target miss.
+    let level = try #require(Levels.candidate(seed: 12345, id: 0, difficulty: .hard, preferredMoves: 16))
+    #expect(level.par == Solver.solve(level)?.count)
+    #expect(try #require(RouteAssessment.evaluate(level)).meets(.hard))
+    #expect(level.par >= 11 && level.par <= 16)
+}
