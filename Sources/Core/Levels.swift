@@ -76,6 +76,9 @@ enum Levels {
             if let difficulty {
                 let choices = PuzzleQuality.meanChoices(level, solution: solution)
                 guard choices >= difficulty.minimumChoices else { continue }
+                if difficulty != .easy {
+                    guard let assessment = RouteAssessment.evaluate(level), assessment.meets(difficulty) else { continue }
+                }
             }
             level.par = solution.count
             return level

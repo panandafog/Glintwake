@@ -24,6 +24,7 @@
 		D23A805DD47944484E8AB6A6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 46C5AF0857B577E7BA29E4C7 /* Assets.xcassets */; };
 		D3EE58B28978394680EBB4A3 /* Difficulty.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFCDBE7058532D9500D33B1C /* Difficulty.swift */; };
 		D73BAB5C62987E9D3D07507D /* ambience.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9E4085B3292E733268CC59E4 /* ambience.wav */; };
+		DD0B79E2332945C03CEE0C6A /* RouteAssessment.swift in Sources */ = {isa = PBXBuildFile; fileRef = D09842062514351F6CF06BC4 /* RouteAssessment.swift */; };
 		FB2AC735F4509AAA7445FFD8 /* Game.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94201AFAF8E56E25B3E80E34 /* Game.swift */; };
 		FD6BA0075623F1921CBDB884 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = A182284BF6916D2C76EF49D0 /* Localizable.strings */; };
 /* End PBXBuildFile section */
@@ -56,6 +57,7 @@
 		B7C3B88014377046578EB0DC /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		BAD31CFD5865E9A1EF828C30 /* Glintwake.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Glintwake.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D06BBC73BBDBE7324A8818B0 /* win.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = win.wav; sourceTree = "<group>"; };
+		D09842062514351F6CF06BC4 /* RouteAssessment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteAssessment.swift; sourceTree = "<group>"; };
 		D1264538B6426B6803E1EC90 /* Attempt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Attempt.swift; sourceTree = "<group>"; };
 		D6286915C9B39B0D9B32F532 /* GlintwakeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlintwakeApp.swift; sourceTree = "<group>"; };
 		E096BAD98F470602F28D94FA /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -143,6 +145,7 @@
 				AFCDBE7058532D9500D33B1C /* Difficulty.swift */,
 				94201AFAF8E56E25B3E80E34 /* Game.swift */,
 				85009BF6C994D32579910E8A /* Levels.swift */,
+				D09842062514351F6CF06BC4 /* RouteAssessment.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -268,6 +271,7 @@
 				474E8E2E2DA96893149A0D72 /* GameStore.swift in Sources */,
 				47167825E6420CD0EF44FE11 /* GlintwakeApp.swift in Sources */,
 				42B1F9FDE12703648205C3D7 /* Levels.swift in Sources */,
+				DD0B79E2332945C03CEE0C6A /* RouteAssessment.swift in Sources */,
 				2177408B95DD85D082873941 /* String+Localization.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

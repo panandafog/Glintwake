@@ -18,13 +18,13 @@ enum Difficulty: String, CaseIterable, Codable, Sendable {
             start = Point(x: 2, y: 1); exit = Point(x: 5, y: 1)
             gems = [Point(x: 5, y: 5), Point(x: 5, y: 3)]; par = 4
         case .medium:
-            rows = ["#######", "#..#O.#", "##O#..#", "#X....#", "#.....#", "##....#", "#######"]
-            start = Point(x: 2, y: 4); exit = Point(x: 2, y: 5)
-            gems = [Point(x: 2, y: 1), Point(x: 2, y: 3), Point(x: 4, y: 4), Point(x: 2, y: 2)]; par = 7
+            rows = ["#######", "##....#", "#..X..#", "#...OX#", "#.O#..#", "#....##", "#######"]
+            start = Point(x: 5, y: 4); exit = Point(x: 4, y: 3)
+            gems = [Point(x: 1, y: 3), Point(x: 4, y: 1), Point(x: 2, y: 5), Point(x: 4, y: 4)]; par = 7
         case .hard:
-            rows = ["#######", "#X....#", "#.#.O##", "#..O..#", "#..O###", "#.....#", "#######"]
-            start = Point(x: 1, y: 2); exit = Point(x: 1, y: 5)
-            gems = [Point(x: 4, y: 1), Point(x: 3, y: 5), Point(x: 1, y: 3), Point(x: 5, y: 3), Point(x: 3, y: 4)]; par = 11
+            rows = ["#######", "#.O.O.#", "#.O..O#", "#O...O#", "#.X.O##", "#..#.##", "#######"]
+            start = Point(x: 3, y: 1); exit = Point(x: 2, y: 1)
+            gems = [Point(x: 2, y: 5), Point(x: 4, y: 2), Point(x: 4, y: 5), Point(x: 2, y: 2), Point(x: 1, y: 1)]; par = 11
         }
         return Level(id: 0, size: 7, tiles: rows.flatMap { $0.map { $0 == "#" ? .wall : $0 == "O" ? .stop : $0 == "X" ? .hazard : .floor } },
                      start: start, exit: exit, gems: gems, par: par)

@@ -10,6 +10,9 @@ import Testing
             let level = Levels.puzzle(seed: UInt64(seed * 7919), difficulty: difficulty)
             let solution = try #require(Solver.solve(level))
             #expect(solution.count == level.par)
+            let report = try #require(RouteAssessment.evaluate(level))
+            #expect(report.optimalMoves == level.par)
+            #expect(report.meets(difficulty))
             #expect(difficulty.moves.contains(level.par))
             #expect(level.gems.count == difficulty.crystals)
             #expect(PuzzleQuality.meanChoices(level, solution: solution) >= difficulty.minimumChoices)
@@ -26,6 +29,7 @@ import Testing
         let level = difficulty.fallback
         let solution = try #require(Solver.solve(level))
         #expect(solution.count == level.par)
+        #expect(try #require(RouteAssessment.evaluate(level)).meets(difficulty))
         #expect(difficulty.moves.contains(level.par))
         #expect(PuzzleQuality.meanChoices(level, solution: solution) >= difficulty.minimumChoices)
     }

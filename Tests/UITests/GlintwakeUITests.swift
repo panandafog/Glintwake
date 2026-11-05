@@ -2,12 +2,22 @@ import XCTest
 
 @MainActor
 final class GlintwakeUITests: XCTestCase {
+    private func boardState(_ app: XCUIApplication) -> [String] {
+        // Compare all semantic cells, independently of decorative SF Symbols and
+        // the accessibility traversal order of the animated traveller overlay.
+        let cells = app.descendants(matching: .any).matching(identifier: "board")
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "Row "))
+            .allElementsBoundByIndex.map(\.label).sorted()
+        XCTAssertEqual(cells.count, 49)
+        return cells
+    }
+
     func testRestartAfterExhaustionRestoresWholeBoard() {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-testing", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launch()
         XCTAssertTrue(app.buttons["direction-2"].waitForExistence(timeout: 10))
-        let initial = app.descendants(matching: .any).matching(identifier: "board").allElementsBoundByIndex.map(\.label)
+        let initial = boardState(app)
         for direction in [2, 6, 2] {
             let button = app.buttons["direction-\(direction)"]
             expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: button)
@@ -19,13 +29,13 @@ final class GlintwakeUITests: XCTestCase {
         app.buttons["result-action"].tap()
         XCTAssertFalse(app.buttons["undo"].isEnabled)
         XCTAssertFalse(app.staticTexts["exhausted"].exists)
-        XCTAssertEqual(initial, app.descendants(matching: .any).matching(identifier: "board").allElementsBoundByIndex.map(\.label))
+        XCTAssertEqual(initial, boardState(app))
         app.terminate()
         app.launchArguments.append("--keep-test-session")
         app.launch()
         XCTAssertTrue(app.buttons["direction-2"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.buttons["undo"].isEnabled)
-        XCTAssertEqual(initial, app.descendants(matching: .any).matching(identifier: "board").allElementsBoundByIndex.map(\.label))
+        XCTAssertEqual(initial, boardState(app))
     }
 
     func testMoveBudgetFailureUndoAndOptimalCompletion() throws {
@@ -91,13 +101,13 @@ final class GlintwakeUITests: XCTestCase {
         expectation(for: NSPredicate(format: "label CONTAINS 'Hard' AND enabled == true"), evaluatedWith: app.buttons["difficulty"])
         waitForExpectations(timeout: 60)
         XCTAssertFalse(app.buttons["brake"].exists)
-        let before = app.descendants(matching: .any).matching(identifier: "board").allElementsBoundByIndex.map(\.label)
+        let before = boardState(app)
         app.terminate()
         app.launchArguments.append("--keep-test-session")
         app.launch()
         XCTAssertTrue(app.buttons["difficulty"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons["difficulty"].label.contains("Hard"))
-        XCTAssertEqual(before, app.descendants(matching: .any).matching(identifier: "board").allElementsBoundByIndex.map(\.label))
+        XCTAssertEqual(before, boardState(app))
         app.buttons["difficulty"].tap()
         for mode in ["easy", "medium", "hard"] { XCTAssertTrue(app.buttons["mode-\(mode)"].label.contains("Solved: 0")) }
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())

@@ -82,9 +82,24 @@ when changing difficulty or requesting another puzzle.
 
 All boards stay 7×7. The generator checks exact shortest paths with breadth-first
 search and filters by distinct safe continuations along an optimal route. This is
-a first difficulty heuristic, not a calibrated prediction of human solving time.
+an initial geometry check. Medium and hard boards additionally pass an exact
+collection-order assessment (`RouteAssessment`):
+
+- The greedy player always heads for a crystal reachable in the fewest moves.
+  Every equally near target and every shortest approach are considered, choosing
+  the best complete outcome among them. A direction tie-break cannot inflate difficulty.
+- Medium requires this greedy player to need at least one extra move (or get stuck);
+  hard requires at least two extra moves (or get stuck).
+- Across all optimal solutions, at least one collection stage must deliberately
+  skip the nearest crystals. Ordinary travel and undo do not count as decisions.
+- Exact reachability and the original minimum-move ranges remain mandatory.
+
+These are targeted tests against obvious collection strategies, not a calibrated
+prediction of human solving time. New filters apply to newly generated boards;
+saved current boards are restored as before.
 Hard puzzles use longer construction walks and a larger candidate budget. Search
-is bounded and each mode has a fixed, solver-verified fallback within its profile.
+is bounded and each mode has a fixed, solver-verified fallback within its profile,
+including the collection-order requirements.
 The legacy numbered generator remains solely for save migration and regression tests.
 No server, account, ads, analytics, purchases, or third-party runtime dependencies.
 
@@ -105,6 +120,7 @@ xcodebuild -project Glintwake.xcodeproj -scheme Glintwake \
 ```
 
 Core checks cover the movement rules, legacy generation, 20 seeds per difficulty,
+rejection of obvious routes, exact order penalties, rotation and gem-order invariance,
 profile-specific fallback boards, and completion credit across undo, restart,
 serialization, and puzzle replacement, plus migration of old movement rules.
 UI tests cover a full restart after exhausting the move limit, the strict move limit,
