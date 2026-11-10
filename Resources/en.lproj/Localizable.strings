@@ -59,3 +59,10 @@
 "Difficulty.Description" = "Each difficulty has its own solved count. Changing difficulty or choosing another puzzle replaces the current board. Only your current puzzle is saved.";
 "Button.OtherPuzzle" = "Another puzzle";
 "Game.Generating" = "Preparing a puzzle…";
+
+"Privacy.Title" = "Privacy & support";
+"Privacy.Summary" = "Glintwake does not collect or transmit your gameplay data. There are no accounts, ads, analytics or tracking. Puzzles are generated on your device.";
+"Privacy.Local" = "Your current puzzle, moves, solved counts and sound preferences are saved locally. The app does not sync them between devices. System backups may include local app data.";
+"Privacy.Support" = "Opening a web link uses your browser. If you email support, the developer receives the information you choose to send.";
+"Privacy.FullPolicy" = "Read the full privacy policy";
+"Privacy.SupportPage" = "Help and contact details";

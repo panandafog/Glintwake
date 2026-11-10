@@ -2,6 +2,46 @@ import XCTest
 
 @MainActor
 final class GlintwakeUITests: XCTestCase {
+    func testPrivacyAndSupportAreAccessibleInRussian() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "-AppleLanguages", "(ru)", "-AppleLocale", "ru_RU"]
+        app.launch()
+        XCTAssertTrue(app.buttons["help"].waitForExistence(timeout: 10))
+        app.buttons["help"].tap()
+        let privacy = app.buttons["privacy"]
+        for _ in 0..<5 {
+            if privacy.isHittable { break }
+            app.scrollViews.firstMatch.swipeUp()
+        }
+        XCTAssertTrue(privacy.isHittable)
+        privacy.tap()
+        let policy = app.descendants(matching: .any).matching(identifier: "privacy-policy-link").firstMatch
+        XCTAssertTrue(policy.waitForExistence(timeout: 5))
+        XCTAssertEqual(policy.label, "Полная политика конфиденциальности")
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "support-link").firstMatch.exists)
+        // Do not open a browser or send mail during the test.
+    }
+
+    func testScreenshotFixtureDoesNotOverwriteProgress() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "-AppleLanguages", "(en)"]
+        app.launch()
+        XCTAssertTrue(app.buttons["direction-2"].waitForExistence(timeout: 10))
+        app.buttons["direction-2"].tap()
+        XCTAssertTrue(app.buttons["undo"].isEnabled)
+        app.terminate()
+        app.launchArguments = ["--screenshot-scene=planning", "-AppleLanguages", "(en)"]
+        app.launch()
+        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "screen.planning").firstMatch.waitForExistence(timeout: 10))
+        app.terminate()
+        app.launchArguments = ["--ui-testing", "--keep-test-session", "-AppleLanguages", "(en)"]
+        app.launch()
+        XCTAssertTrue(app.buttons["undo"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["undo"].isEnabled)
+        app.buttons["undo"].tap()
+        XCTAssertFalse(app.buttons["undo"].isEnabled)
+    }
+
     private func boardState(_ app: XCUIApplication) -> [String] {
         // Compare all semantic cells, independently of decorative SF Symbols and
         // the accessibility traversal order of the animated traveller overlay.

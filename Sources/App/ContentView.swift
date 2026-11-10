@@ -38,6 +38,10 @@ struct ContentView: View {
             }
         }
         .foregroundStyle(.white)
+        #if DEBUG
+        .modifier(ScreenshotPresentation(showDifficulty: $showDifficulty))
+        .modifier(ScreenshotReadiness(sheet: false))
+        #endif
         .disabled(game.isGenerating)
         .overlay {
             if game.isGenerating {
@@ -215,6 +219,9 @@ struct ContentView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Difficulty.Description".localized).font(.callout).foregroundStyle(Palette.secondary)
+                        #if DEBUG
+                        .modifier(ScreenshotReadiness(sheet: true))
+                        #endif
                     ForEach(Difficulty.allCases, id: \.self) { mode in
                         Button {
                             if mode != game.difficulty { game.newPuzzle(mode) }
@@ -244,7 +251,8 @@ struct ContentView: View {
             .background(Palette.background)
             .navigationTitle("Difficulty.Title".localized)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Button.Done".localized) { showDifficulty = false } } }
-        }.frame(minWidth: 300, idealWidth: 420, minHeight: 340, idealHeight: 460)
+        }
+        .frame(minWidth: 300, idealWidth: 420, minHeight: 340, idealHeight: 460)
     }
 
     private var help: some View {
@@ -259,6 +267,9 @@ struct ContentView: View {
                     helpRow("burst.fill", "Help.Hazards.Title".localized, "Help.Hazards.Body".localized, Palette.coral)
                     Text("Help.Par.Body".localized)
                         .font(.system(size: 13)).foregroundStyle(Palette.secondary)
+                    NavigationLink { PrivacyView() } label: {
+                        Label("Privacy.Title".localized, systemImage: "hand.raised")
+                    }.buttonStyle(SoftButton()).accessibilityIdentifier("privacy")
                     #if os(macOS)
                     Text("Help.Keyboard".localized)
                         .font(.system(size: 13)).foregroundStyle(Palette.secondary)

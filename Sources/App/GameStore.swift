@@ -15,6 +15,7 @@ final class GameStore: ObservableObject {
     @Published private(set) var isAnimating = false
     private var animationTask: Task<Void, Never>?
     private let defaults: UserDefaults
+    private var savesEnabled = true
     private let saveKey = "glintwake.session.v3"
 
     struct LegacySave: Codable {
@@ -26,11 +27,29 @@ final class GameStore: ObservableObject {
     }
 
     init() {
+        #if DEBUG
         let testing = ProcessInfo.processInfo.arguments.contains("--ui-testing")
         defaults = testing ? UserDefaults(suiteName: "Glintwake.UITests")! : .standard
-        if testing && !ProcessInfo.processInfo.arguments.contains("--keep-test-session") {
+        if testing && !ScreenshotSupport.isRequested && !ProcessInfo.processInfo.arguments.contains("--keep-test-session") {
             defaults.removePersistentDomain(forName: "Glintwake.UITests")
         }
+        #else
+        defaults = .standard
+        #endif
+        #if DEBUG
+        if ScreenshotSupport.isRequested {
+            let fixture = ScreenshotSupport.fixture()
+            session = fixture
+            position = fixture.position
+            savesEnabled = false
+            if ScreenshotSupport.scene == .planning { hint = Solver.solve(fixture.level)?.first }
+            if let last = fixture.actions.last {
+                let previous = fixture.actions.dropLast().reduce(fixture.level.initial) { Rules.move($0, in: fixture.level, action: $1).position }
+                trail = [previous.point] + Rules.move(previous, in: fixture.level, action: last).path
+            }
+            return
+        }
+        #endif
         let restored: PuzzleSession
         if let data = defaults.data(forKey: saveKey),
            let saved = try? JSONDecoder().decode(PuzzleSession.self, from: data) {
@@ -45,7 +64,11 @@ final class GameStore: ObservableObject {
             restored = PuzzleSession(level: level, difficulty: mode,
                                      credited: old.best[String(old.levelID)] != nil).migratingToSlidingOnly()
         } else {
+            #if DEBUG
             let level = testing ? Levels.make(0) : Levels.puzzle(seed: UInt64.random(in: 0...UInt64.max), difficulty: .easy)
+            #else
+            let level = Levels.puzzle(seed: UInt64.random(in: 0...UInt64.max), difficulty: .easy)
+            #endif
             restored = PuzzleSession(level: level, difficulty: .easy)
         }
         session = restored
@@ -152,6 +175,7 @@ final class GameStore: ObservableObject {
     }
 
     private func persist() {
+        guard savesEnabled else { return }
         if let data = try? JSONEncoder().encode(session) {
             defaults.set(data, forKey: saveKey)
         }
