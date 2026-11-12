@@ -1,0 +1,23 @@
+{
+  "metadataSource": "AppStore/app-store-metadata.md",
+  "reviewLocale": "en-US",
+  "processingTimeoutSeconds": 1800,
+  "assetTimeoutSeconds": 600,
+  "appInfoCategories": {"primaryCategory": "GAMES", "primarySubcategoryOne": "GAMES_PUZZLE"},
+  "ageRating": {
+    "advertising": false,
+    "gambling": false,
+    "lootBox": false,
+    "messagingAndChat": false,
+    "socialMedia": false,
+    "unrestrictedWebAccess": false,
+    "userGeneratedContent": false
+  },
+  "screenshotGroups": [
+    {"platform": "IOS", "folder": "iPhone", "displayType": "APP_IPHONE_67", "size": [1320, 2868]},
+    {"platform": "IOS", "folder": "iPad", "displayType": "APP_IPAD_PRO_3GEN_129", "size": [2064, 2752]},
+    {"platform": "MAC_OS", "folder": "macOS", "displayType": "APP_DESKTOP", "size": [1280, 800]},
+    {"platform": "IOS", "folder": "iPhone-Duo/primary", "displayType": null, "size": [1398, 2034], "optional": true},
+    {"platform": "IOS", "folder": "iPhone-Duo/primary-1", "displayType": null, "size": [2853, 2007], "optional": true}
+  ]
+}

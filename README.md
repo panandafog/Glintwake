@@ -116,6 +116,9 @@ with EN/RU metadata, privacy policy and support pages. Screenshot scenes and
 FramePilot setup are documented in [Docs/FramePilot.md](Docs/FramePilot.md).
 Signed archive validation, App Store Connect fields and device/TestFlight checks
 remain release gates; local preparation does not submit or publish the app.
+Release automation and the one-time GitHub/Apple setup are documented in
+[App Store release automation](Docs/APP_STORE_RELEASE_AUTOMATION.md). The manual
+GitHub workflow prepares a Draft Review Submission; the owner presses Submit for Review.
 The generator guarantees solvability, not a unique or aesthetically ideal route.
 
 ## Tests

@@ -8,3 +8,12 @@ TestResults/
 Build/
 
 __pycache__/
+
+.bundle/
+vendor/bundle/
+fastlane/report.xml
+fastlane/README.md
+*.p8
+*.p12
+*.mobileprovision
+*.provisionprofile
