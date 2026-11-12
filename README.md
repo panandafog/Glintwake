@@ -111,10 +111,15 @@ No server, account, ads, analytics, purchases, or third-party runtime dependenci
 The movement engine and generator are original Swift implementations. The initial
 mechanical reference is [Inertia from Simon Tatham's collection](https://www.chiark.greenend.org.uk/~sgtatham/puzzles/doc/inertia.html).
 
-This is a proof of concept, not an App Store submission package. Remaining product
-work includes playtesting and difficulty calibration, broader accessibility and
-device testing, final localization, store metadata, and release signing. The
-current generator guarantees solvability, not a unique or aesthetically ideal route.
+App Store preparation is in [AppStore/release-checklist.md](AppStore/release-checklist.md),
+with EN/RU metadata, privacy policy and support pages. Screenshot scenes and
+FramePilot setup are documented in [Docs/FramePilot.md](Docs/FramePilot.md).
+Signed archive validation, App Store Connect fields and device/TestFlight checks
+remain release gates; local preparation does not submit or publish the app.
+Release automation and the one-time GitHub/Apple setup are documented in
+[App Store release automation](Docs/APP_STORE_RELEASE_AUTOMATION.md). The manual
+GitHub workflow prepares a Draft Review Submission; the owner presses Submit for Review.
+The generator guarantees solvability, not a unique or aesthetically ideal route.
 
 ## Tests
 

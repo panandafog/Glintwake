@@ -23,18 +23,31 @@ final class AudioController: ObservableObject {
     private var active = false
     private var interrupted = false
     private var observers: [NSObjectProtocol] = []
-    private let testing = ProcessInfo.processInfo.arguments.contains("--ui-testing")
+    #if DEBUG
+    private let testing = ProcessInfo.processInfo.arguments.contains("--ui-testing") || ScreenshotSupport.isRequested
+    #else
+    private let testing = false
+    #endif
     private let defaults: UserDefaults
 
     private init() {
-        let testing = ProcessInfo.processInfo.arguments.contains("--ui-testing")
-        defaults = testing ? UserDefaults(suiteName: "Glintwake.AudioUITests")! : .standard
-        if testing && !ProcessInfo.processInfo.arguments.contains("--keep-test-session") {
+        #if DEBUG
+        let testing = ProcessInfo.processInfo.arguments.contains("--ui-testing") || ScreenshotSupport.isRequested
+        if ScreenshotSupport.isRequested { defaults = UserDefaults(suiteName: "Glintwake.Screenshot." + UUID().uuidString)! }
+        else { defaults = testing ? UserDefaults(suiteName: "Glintwake.AudioUITests")! : .standard }
+        #else
+        defaults = .standard
+        #endif
+        #if DEBUG
+        if testing && !ScreenshotSupport.isRequested && !ProcessInfo.processInfo.arguments.contains("--keep-test-session") {
             defaults.removePersistentDomain(forName: "Glintwake.AudioUITests")
         }
+        #endif
         effectsEnabled = defaults.object(forKey: "audio.effects") as? Bool ?? true
         ambienceEnabled = defaults.object(forKey: "audio.ambience") as? Bool ?? true
+        #if DEBUG
         guard !testing else { return }
+        #endif
         #if os(iOS)
         // Respect the silent switch and mix quietly with music from other apps.
         try? AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default)
