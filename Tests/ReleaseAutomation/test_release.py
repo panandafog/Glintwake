@@ -108,6 +108,9 @@ class FakeAPI:
     def request(self, method, path, data=None, params=None):
         self.calls.append((method, path))
         parts = path.split("/")[2:]
+        if method == "GET" and len(parts) == 4 and parts[2:] == ["relationships", "build"]:
+            value = self.records[parts[0], parts[1]]
+            return {"data": copy.deepcopy(value.get("relationships", {}).get("build", {}).get("data"))}
         if method == "DELETE":
             self.records.pop((parts[0], parts[1]), None)
         return {}
@@ -149,6 +152,109 @@ class StateTests(unittest.TestCase):
         self.api.create("appStoreVersions", {"versionString": "0.2.0", "platform": "IOS"}, {"app": ("apps", "app")})
         with self.assertRaises(NeedsAction):
             self.store.ensure_version()
+
+    def initial_draft(self, version="1.0", **attrs):
+        return self.api.create("appStoreVersions", {"versionString": version, "platform": "IOS", "releaseType": "AFTER_APPROVAL", **attrs}, {"app": ("apps", "app")})
+
+    def test_initial_empty_draft_is_reused_without_changing_id_or_release_policy(self):
+        initial = self.initial_draft()
+        self.store.upsert_locale(initial, "appStoreVersionLocalizations", "appStoreVersionLocalizations", "en-US", {})
+        version = self.store.ensure_version()
+        self.assertEqual(version["id"], initial["id"])
+        self.assertEqual(version["attributes"]["versionString"], "0.1.0")
+        self.assertEqual(version["attributes"]["releaseType"], "AFTER_APPROVAL")
+        self.assertIn("REUSED_EMPTY_INITIAL_DRAFT", self.report["versionPreparation"])
+        self.store.ensure_version()
+        self.assertEqual(sum(m == "POST" and p == "/v1/appStoreVersions" for m, p in self.api.calls), 1)
+        self.assertEqual(self.api.calls.count(("PATCH", f"/v1/appStoreVersions/{initial['id']}")), 1)
+
+    def test_initial_draft_with_selected_build_is_preserved(self):
+        initial = self.initial_draft()
+        self.api.update(initial, rels={"build": ("builds", "build")})
+        with self.assertRaises(NeedsAction):
+            self.store.ensure_version()
+        self.assertEqual(self.api.get(f"/v1/appStoreVersions/{initial['id']}")["attributes"]["versionString"], "1.0")
+
+    def test_initial_100_placeholder_is_supported(self):
+        initial = self.initial_draft("1.0.0")
+        self.assertEqual(self.store.ensure_version()["id"], initial["id"])
+        self.assertIn("1.0.0 -> 0.1.0", self.report["versionPreparation"])
+
+    def test_unknown_build_relationship_does_not_mean_unbound(self):
+        self.initial_draft()
+        with patch.object(self.api, "request", return_value={}), self.assertRaises(NeedsAction):
+            self.store.ensure_version()
+        self.assertFalse(any(method == "PATCH" for method, _ in self.api.calls))
+
+    def test_concurrently_changed_initial_draft_is_not_renumbered(self):
+        initial = self.initial_draft()
+        original_get = self.api.get
+        def changed_get(path):
+            if path == f"/v1/appStoreVersions/{initial['id']}":
+                self.api.records["appStoreVersions", initial["id"]]["attributes"]["appVersionState"] = "IN_REVIEW"
+            return original_get(path)
+        with patch.object(self.api, "get", side_effect=changed_get), self.assertRaises(NeedsAction):
+            self.store.ensure_version()
+        self.assertFalse(any(method == "PATCH" for method, _ in self.api.calls))
+
+    def test_mac_initial_draft_uses_only_matching_native_mac_build(self):
+        initial = self.api.create("appStoreVersions", {"versionString": "1.0", "platform": "MAC_OS"}, {"app": ("apps", "app")})
+        self.api.add(resource("preReleaseVersions", "mac-pre", {"version": "0.1.0", "platform": "MAC_OS"}))
+        self.api.add(resource("builds", "mac-build", {"version": "4", "processingState": "VALID", "expired": False},
+                              {"app": ("apps", "app"), "preReleaseVersion": ("preReleaseVersions", "mac-pre")}))
+        mac = Store(self.api, identity("macos"), self.config, {})
+        version = mac.ensure_version()
+        self.assertEqual(version["id"], initial["id"])
+        self.assertEqual(version["attributes"]["platform"], "MAC_OS")
+        self.assertEqual(version["attributes"]["versionString"], "0.1.0")
+
+    def test_initial_draft_with_localized_content_is_preserved(self):
+        initial = self.initial_draft()
+        self.store.upsert_locale(initial, "appStoreVersionLocalizations", "appStoreVersionLocalizations", "en-US", {"description": "Owner's existing release"})
+        with self.assertRaises(NeedsAction):
+            self.store.ensure_version()
+
+    def test_initial_draft_with_media_is_preserved(self):
+        initial = self.initial_draft()
+        locale = self.store.upsert_locale(initial, "appStoreVersionLocalizations", "appStoreVersionLocalizations", "en-US", {})
+        self.api.create("appScreenshotSets", {"screenshotDisplayType": "APP_IPHONE_67"}, {"appStoreVersionLocalization": ("appStoreVersionLocalizations", locale["id"])})
+        with self.assertRaises(NeedsAction):
+            self.store.ensure_version()
+
+    def test_initial_draft_after_published_history_is_preserved(self):
+        self.initial_draft()
+        published = self.api.create("appStoreVersions", {"versionString": "0.0.1", "platform": "IOS"}, {"app": ("apps", "app")})
+        self.api.records["appStoreVersions", published["id"]]["attributes"]["appVersionState"] = "READY_FOR_DISTRIBUTION"
+        with self.assertRaises(NeedsAction):
+            self.store.ensure_version()
+
+    def test_initial_draft_with_review_history_is_preserved(self):
+        self.initial_draft()
+        self.api.add(resource("reviewSubmissions", "history", {"state": "COMPLETE", "platform": "IOS"}, {"app": ("apps", "app")}))
+        with self.assertRaises(NeedsAction):
+            self.store.ensure_version()
+
+    def test_initial_draft_waits_for_valid_target_build(self):
+        self.initial_draft()
+        self.api.records["builds", "build"]["attributes"]["processingState"] = "PROCESSING"
+        with self.assertRaises(NeedsAction):
+            self.store.ensure_version()
+
+    def test_ready_for_review_placeholder_is_not_renumbered(self):
+        initial = self.initial_draft()
+        self.api.records["appStoreVersions", initial["id"]]["attributes"]["appVersionState"] = "READY_FOR_REVIEW"
+        with self.assertRaises(NeedsAction):
+            self.store.ensure_version()
+
+    def test_status_explains_version_mismatch_without_mutations(self):
+        from Scripts.release.cli import status
+        self.initial_draft()
+        self.api.calls.clear()
+        with self.assertRaises(NeedsAction) as caught:
+            status(self.store, self.locales)
+        self.assertIn("1.0 (PREPARE_FOR_SUBMISSION)", str(caught.exception))
+        self.assertIn("VALID", str(caught.exception))
+        self.assertFalse(any(method != "GET" for method, _ in self.api.calls))
 
     def test_build_filter_is_independently_verified(self):
         self.assertEqual(self.store.find_build()["id"], "build")
