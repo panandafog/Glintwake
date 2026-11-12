@@ -78,12 +78,16 @@ def verify_remote(store, version, build, localizations):
 
 
 def status(store, localizations):
-    versions = [v for v in store.versions() if v["attributes"]["versionString"] == store.identity["version"]]
+    all_versions = store.versions()
+    versions = [v for v in all_versions if v["attributes"]["versionString"] == store.identity["version"]]
     build = store.find_build()
     if build is None or build["attributes"]["processingState"] != "VALID":
         raise Waiting("Build is not yet processed/visible in Apple. Rerun status, or the same release stage after processing.")
     if len(versions) != 1:
-        raise NeedsAction("Target App Store version is not present uniquely. Run full or review.")
+        existing = ", ".join(store.report["availableVersions"]) or "none"
+        raise NeedsAction(f"Build {store.identity['version']} ({store.identity['build']}) is VALID; requested App Store version "
+                          f"{store.identity['version']} is not present uniquely. Existing versions: {existing}. "
+                          "status is read-only; run full to prepare the version and metadata.")
     version = versions[0]
     store.report["versionState"] = state(version)
     if state(version) != "READY_FOR_REVIEW":
@@ -107,7 +111,7 @@ def summary(report, path):
     review_url = url + "/appreview" if report.get("appId") else url
     text = [f"## {ident['name']} — {ident['platform']}", "", "| Field | Status |", "| --- | --- |"]
     for name, value in [("Bundle ID", ident["bundleId"]), ("Version", ident["version"]), ("Build", ident["build"]),
-                        *[(k, report.get(k, "NOT_RUN")) for k in ("archive", "upload", "processing", "metadata", "screenshots", "review", "draft", "versionState", "draftState", "verification", "outcome")]]:
+                        *[(k, report.get(k, "NOT_RUN")) for k in ("archive", "upload", "processing", "availableVersions", "versionPreparation", "metadata", "screenshots", "review", "draft", "versionState", "draftState", "verification", "outcome")]]:
         text.append(f"| {name} | {str(value).replace('|', '/').replace(chr(10), ' ')} |")
     text += ["", f"[Open App Store Connect]({url}) · [App Review]({review_url})", "", "### Remaining actions", ""]
     if report.get("outcome") == "SUCCEEDED" and report.get("verification", "").startswith("READY_FOR_REVIEW"):

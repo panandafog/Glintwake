@@ -172,8 +172,10 @@ class Store:
         report["appId"] = self.app["id"]
 
     def versions(self):
-        return [v for v in self.api.list(f"/v1/apps/{self.app['id']}/appStoreVersions", {"filter[platform]": self.identity["platform"], "limit": 200})
-                if v["attributes"].get("platform") == self.identity["platform"]]
+        versions = [v for v in self.api.list(f"/v1/apps/{self.app['id']}/appStoreVersions", {"filter[platform]": self.identity["platform"], "limit": 200})
+                    if v["attributes"].get("platform") == self.identity["platform"]]
+        self.report["availableVersions"] = [f"{v['attributes']['versionString']} ({state(v)})" for v in versions]
+        return versions
 
     def submissions(self):
         return [s for s in self.api.list(f"/v1/apps/{self.app['id']}/reviewSubmissions", {"filter[platform]": self.identity["platform"], "limit": 200})
@@ -193,18 +195,74 @@ class Store:
     def ensure_version(self):
         version = self.guard()
         if version:
+            self.report.setdefault("versionPreparation", "EXISTING")
             return version
-        if any(state(v) in EDITABLE | {"READY_FOR_REVIEW"} for v in self.versions()):
-            raise NeedsAction("Another editable version already exists on this platform; resolve it in ASC first.")
+        versions = self.versions()
+        if any(state(v) in EDITABLE | {"READY_FOR_REVIEW"} for v in versions):
+            reused = self.reuse_initial_draft(versions)
+            if reused:
+                return reused
+            existing = ", ".join(self.report["availableVersions"])
+            raise NeedsAction(f"Requested {self.identity['platform']} version {self.identity['version']}; existing: {existing}. "
+                              "Automatic renumbering is limited to one empty initial 1.0/1.0.0 draft with no selected build, "
+                              "no review submissions/history and an already VALID target build. Other versions were preserved; resolve the mismatch in ASC.")
         try:
-            return self.api.create("appStoreVersions", {"platform": self.identity["platform"], "versionString": self.identity["version"],
-                                                       "releaseType": "MANUAL"}, {"app": ("apps", self.app["id"])})
+            version = self.api.create("appStoreVersions", {"platform": self.identity["platform"], "versionString": self.identity["version"],
+                                                           "releaseType": "MANUAL"}, {"app": ("apps", self.app["id"])})
+            self.report["versionPreparation"] = "CREATED"
+            return version
         except ApiError as error:
             if error.status == 409:
                 version = self.guard()
                 if version:
                     return version
             raise
+
+    def reuse_initial_draft(self, versions):
+        """Adopt only ASC's empty initial version placeholder, never another release."""
+        if len(versions) != 1:
+            return None
+        candidate = versions[0]
+        old = candidate["attributes"]["versionString"]
+        if old not in {"1.0", "1.0.0"} or state(candidate) != "PREPARE_FOR_SUBMISSION":
+            return None
+        if self.submissions():
+            return None
+        build = self.find_build()
+        if not build or build["attributes"].get("processingState") != "VALID":
+            return None
+        link = f"/v1/appStoreVersions/{candidate['id']}/relationships/build"
+        if self.api.request("GET", link).get("data", "UNKNOWN") is not None:
+            return None
+        locales = self.api.list(f"/v1/appStoreVersions/{candidate['id']}/appStoreVersionLocalizations", {"limit": 200})
+        fields = ("description", "keywords", "marketingUrl", "promotionalText", "supportUrl", "whatsNew")
+        for locale in locales:
+            if any(locale["attributes"].get(key) for key in fields):
+                return None
+            for media in ("appScreenshotSets", "appPreviewSets"):
+                if self.api.list(f"/v1/appStoreVersionLocalizations/{locale['id']}/{media}", {"limit": 200}):
+                    return None
+        # Re-read immediately before changing only the version string. Do not
+        # replace a build, clear fields, delete the placeholder or edit release policy.
+        concurrent = self.guard()
+        if concurrent:
+            return concurrent
+        fresh_versions = self.versions()
+        if len(fresh_versions) != 1 or fresh_versions[0]["id"] != candidate["id"]:
+            raise NeedsAction("App Store versions changed while preparing the initial draft. Rerun to recheck; no version was renumbered.")
+        fresh = self.api.get(f"/v1/appStoreVersions/{candidate['id']}")
+        if (state(fresh) != "PREPARE_FOR_SUBMISSION" or fresh["attributes"]["versionString"] != old
+                or self.api.request("GET", link).get("data", "UNKNOWN") is not None):
+            raise NeedsAction("The initial draft changed while preparing it. No version was renumbered; inspect ASC and retry.")
+        self.api.update(fresh, {"versionString": self.identity["version"]})
+        actual = self.api.get(f"/v1/appStoreVersions/{candidate['id']}")
+        if (actual["attributes"].get("versionString") != self.identity["version"]
+                or actual["attributes"].get("platform") != self.identity["platform"]
+                or state(actual) != "PREPARE_FOR_SUBMISSION"):
+            raise NeedsAction("Apple did not confirm the expected initial draft version; inspect ASC before retrying.")
+        self.report["versionPreparation"] = f"REUSED_EMPTY_INITIAL_DRAFT ({old} -> {self.identity['version']})"
+        self.report["availableVersions"] = [f"{actual['attributes']['versionString']} ({state(actual)})"]
+        return actual
 
     def find_build(self):
         builds = self.api.list("/v1/builds", {"filter[app]": self.app["id"], "filter[version]": self.identity["build"],
