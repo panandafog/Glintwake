@@ -61,7 +61,25 @@ def main():
                    onlyTesting="\n".join(f"GlintwakeScreenshots/StoreScreenshots/test{i:02d}{scene.title()}"
                                          for i, scene in enumerate(SCENES, 1)))
     DEST.mkdir(parents=True, exist_ok=True)
-    for name, config in [("ios", base), ("macos", desktop)]:
+    presets = [("ios", base), ("macos", desktop)]
+    inventory = command("xcrun", "simctl", "list", "devices", "available", "-j")["devices"]
+    candidates = [(runtime, device) for runtime, devices in inventory.items() for device in devices
+                  if device.get("deviceTypeIdentifier") == "com.apple.CoreSimulator.SimDeviceType.iPhone-Duo"
+                  and not device["name"].startswith("FramePilot ")]
+    if candidates:
+        runtime, device = max(candidates, key=lambda item: (
+            tuple(map(int, re.findall(r"\d+", item[0]))), item[1]["name"] == "iPhone Duo"))
+        duo = copy.deepcopy(base)
+        # Duo can show only its system status area while the app is still opening.
+        # Give scene launch more time before FramePilot's pixel-stability check.
+        duo["settlingSeconds"] = 12
+        duo["devices"] = [dict(id=device["udid"], name=device["name"], family="iPhone", runtime=runtime,
+                               deviceType=device["deviceTypeIdentifier"], displays=["primary", "primary-1"])]
+        presets.append(("ios-duo", duo))
+    else:
+        (DEST / "ios-duo.json").unlink(missing_ok=True)
+        print("Duo preset unavailable: install the iPhone Duo simulator runtime to prepare it.")
+    for name, config in presets:
         path = DEST / (name + ".json")
         path.write_text(json.dumps(config, ensure_ascii=False, indent=2) + "\n")
         print(path)
