@@ -88,7 +88,12 @@ def status(store, localizations):
         raise NeedsAction(f"Build {store.identity['version']} ({store.identity['build']}) is VALID; requested App Store version "
                           f"{store.identity['version']} is not present uniquely. Existing versions: {existing}. "
                           "status is read-only; run full to prepare the version and metadata.")
-    version = versions[0]
+    # The collection can lag behind the resource after adding a review item.
+    # Re-read the exact version before judging its current state.
+    version = store.api.get(f"/v1/appStoreVersions/{versions[0]['id']}")
+    if (version["attributes"].get("platform") != store.identity["platform"] or
+            version["attributes"].get("versionString") != store.identity["version"]):
+        raise NeedsAction("Target version identity changed during status verification. Inspect ASC before retrying.")
     store.report["versionState"] = state(version)
     if state(version) != "READY_FOR_REVIEW":
         raise NeedsAction(f"Version is {state(version)}, not READY_FOR_REVIEW. Run the missing preparation stages; inspect App Privacy, age rating, agreements and availability in ASC.")

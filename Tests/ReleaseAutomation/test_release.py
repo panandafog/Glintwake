@@ -14,7 +14,7 @@ import yaml
 
 from Scripts.release.asc import (ApiError, Client, Store, Token, payload, relationship,
                                  sanitized, screenshots, upload_asset_operations)
-from Scripts.release.cli import summary, verify_remote
+from Scripts.release.cli import summary, verify_remote, status
 from Scripts.release.metadata import (NeedsAction, ReleaseError, Waiting, ROOT, identity,
                                       metadata, release_notes, screenshot_files, complete_age_answers, asc_locale)
 from Scripts.release.signing import binary, check_profile
@@ -498,6 +498,30 @@ class StateTests(unittest.TestCase):
         self.store.draft(version, build)
         self.assertEqual(self.report["draftId"], draft_id)
         self.assertEqual(sum(m == "POST" and p == "/v1/reviewSubmissions" for m, p in self.api.calls), 1)
+
+    def test_status_rereads_version_when_collection_lags_after_draft(self):
+        version = self.store.ensure_version()
+        build = self.store.find_build()
+        self.store.bind(version, build)
+        self.store.draft(version, build)
+        stale = copy.deepcopy(version)
+        stale["attributes"]["appVersionState"] = "PREPARE_FOR_SUBMISSION"
+        with patch.object(self.store, "versions", return_value=[stale]), patch("Scripts.release.cli.verify_remote"):
+            status(self.store, self.locales)
+        self.assertTrue(self.report["verification"].startswith("READY_FOR_REVIEW"))
+
+    def test_status_does_not_assume_ready_when_version_resource_is_unprepared(self):
+        self.store.ensure_version()
+        with self.assertRaisesRegex(NeedsAction, "PREPARE_FOR_SUBMISSION"):
+            status(self.store, self.locales)
+        self.assertNotIn("verification", self.report)
+
+    def test_status_rejects_changed_identity_in_version_resource(self):
+        version = self.store.ensure_version()
+        self.api.records["appStoreVersions", version["id"]]["attributes"]["platform"] = "MAC_OS"
+        with patch.object(self.store, "versions", return_value=[version]), self.assertRaisesRegex(NeedsAction, "identity changed"):
+            status(self.store, self.locales)
+        self.assertNotIn("verification", self.report)
 
     def test_draft_wrong_build_is_rejected(self):
         version = self.store.ensure_version()
