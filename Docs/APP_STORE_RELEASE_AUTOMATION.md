@@ -3,7 +3,8 @@
 Реализация и проверка документации API: **2026-11-13**. Конечная точка workflow —
 подтверждённые Apple `READY_FOR_REVIEW` у версии, review item и Draft Review
 Submission с конкретным обработанным build. **Workflow не отправляет на ревью и
-не публикует приложение.** Реальная доставка/подпись с credentials ещё не проверена.
+не публикует приложение.** Реальная подпись и доставка build 5 проверены для iOS
+и Mac; запуск №10 подтвердил обе платформы в READY_FOR_REVIEW.
 
 ## Что обнаружено при аудите
 
@@ -398,8 +399,11 @@ API, пересылка assets и review states моделируются fake-с
 `draft` подтвердил READY_FOR_REVIEW через GET самой версии. Теперь `status` также
 перечитывает точную версию отдельным GET и проверяет platform/version identity;
 ответ списка больше не служит итоговым подтверждением её состояния. Готовность
-Mac требует повторной проверки `status`; изменения metadata/повторный upload для
-неё не нужны. Submit for Review и публикация остаются ручными действиями владельца.
+Mac подтверждена запуском №10 (`both` / `status`, build 5): обе platform versions
+и оба draft имеют READY_FOR_REVIEW, обе сборки VALID. Локализованные тексты,
+обычные скриншоты, checksum/order, App Review contact и выбор точного build прошли
+read-back. [Проверка обеих платформ](https://github.com/panandafog/Glintwake/actions/runs/43465656415).
+Submit for Review и публикация остаются ручными действиями владельца.
 
 ## Проверенные официальные источники
 
