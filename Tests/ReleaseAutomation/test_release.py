@@ -16,7 +16,7 @@ from Scripts.release.asc import (ApiError, Client, Store, Token, payload, relati
                                  sanitized, screenshots, upload_asset_operations)
 from Scripts.release.cli import summary, verify_remote
 from Scripts.release.metadata import (NeedsAction, ReleaseError, Waiting, ROOT, identity,
-                                      metadata, release_notes, screenshot_files, complete_age_answers)
+                                      metadata, release_notes, screenshot_files, complete_age_answers, asc_locale)
 from Scripts.release.signing import binary, check_profile
 from Scripts.release.artifact_source import validate_run
 
@@ -83,6 +83,9 @@ class FakeAPI:
     def create(self, kind, attrs=None, rels=None):
         self.calls.append(("POST", "/v1/" + kind))
         attrs = dict(attrs or {})
+        if kind in {"appInfoLocalizations", "appStoreVersionLocalizations"} and attrs.get("locale") not in {"en-US", "ru"}:
+            # Apple's locale shortcodes differ from repository folder names.
+            raise ApiError(409, [{"code": "ENTITY_ERROR.ATTRIBUTE.INVALID", "source": {"pointer": "/data/attributes/locale"}}])
         if kind in {"reviewSubmissions", "reviewSubmissionItems"}:
             attrs["state"] = "READY_FOR_REVIEW"
         if kind == "appStoreVersions":
@@ -391,6 +394,38 @@ class StateTests(unittest.TestCase):
         self.assertEqual(updated["attributes"]["marketingUrl"], "https://example.org")
         self.assertEqual(updated["id"], locale["id"])
 
+    def test_russian_metadata_uses_apple_shortcode_without_changing_source_keys(self):
+        locales = self.store.metadata(self.store.ensure_version(), self.locales, self.copyright)
+        self.assertEqual(set(locales), {"en-US", "ru-RU"})
+        self.assertEqual(locales["ru-RU"]["attributes"]["locale"], "ru")
+        info = self.api.list("/v1/appInfos/info/appInfoLocalizations")
+        self.assertEqual({x["attributes"]["locale"] for x in info}, {"en-US", "ru"})
+        self.assertEqual(locales["ru-RU"]["attributes"]["description"], self.locales["ru-RU"]["description"])
+
+    def test_existing_russian_localizations_are_reused_on_repeated_runs(self):
+        version = self.store.ensure_version()
+        existing = {}
+        for kind, parent, relation in [
+            ("appInfoLocalizations", ("appInfos", "info"), "appInfo"),
+            ("appStoreVersionLocalizations", ("appStoreVersions", version["id"]), "appStoreVersion")
+        ]:
+            existing[kind] = self.api.create(kind, {"locale": "ru"}, {relation: parent})["id"]
+        self.store.metadata(version, self.locales, self.copyright)
+        self.api.calls.clear()
+        locales = self.store.metadata(version, self.locales, self.copyright)
+        self.assertEqual(locales["ru-RU"]["id"], existing["appStoreVersionLocalizations"])
+        for kind, id in existing.items():
+            matches = [v for (typ, _), v in self.api.records.items() if typ == kind and v["attributes"]["locale"] == "ru"]
+            self.assertEqual([v["id"] for v in matches], [id])
+            self.assertNotIn(("POST", "/v1/" + kind), self.api.calls)
+            self.assertNotIn(("PATCH", f"/v1/{kind}/{id}"), self.api.calls)
+
+    def test_locale_mapping_preserves_regions_and_rejects_unknown_languages(self):
+        self.assertEqual(asc_locale("en-US"), "en-US")
+        self.assertEqual(asc_locale("ru-RU"), "ru")
+        with self.assertRaises(ReleaseError):
+            asc_locale("en-GB")
+
     def test_live_app_information_is_not_edited(self):
         self.api.records["appInfos", "info"]["attributes"]["state"] = "READY_FOR_DISTRIBUTION"
         with self.assertRaises(NeedsAction):
@@ -488,6 +523,13 @@ class StateTests(unittest.TestCase):
         with patch.dict(os.environ, {"ASC_REVIEW_CONTACT_PHONE": "+10000000000"}):
             self.store.configure_review(version, self.review)
         verify_remote(self.store, version, build, self.locales)
+        # Readback must also validate Russian metadata and its matching local PNGs.
+        russian = locales["ru-RU"]
+        self.assertEqual(russian["attributes"]["locale"], "ru")
+        self.api.records[russian["type"], russian["id"]]["attributes"]["description"] = "different Russian copy"
+        with self.assertRaises(NeedsAction):
+            verify_remote(self.store, version, build, self.locales)
+        self.api.records[russian["type"], russian["id"]]["attributes"]["description"] = self.locales["ru-RU"]["description"]
         self.store.draft(version, build)
         self.assertEqual(self.report["versionState"], "READY_FOR_REVIEW")
 
