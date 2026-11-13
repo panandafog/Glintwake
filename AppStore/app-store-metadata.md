@@ -5,7 +5,7 @@
 | Поле | Значение |
 | --- | --- |
 | Name | Glintwake — доступность имени проверить при создании карточки |
-| Version / Build | 0.1.0 / 4 — текущие значения исходников |
+| Version / Build | 0.1.0 / 5 — текущие значения исходников |
 | Bundle ID | `com.panandafog.glintwake`, один app target для iOS/iPadOS и native macOS |
 | Primary language | English (U.S.) |
 | Category | Games → Puzzle; дополнительную категорию можно не указывать |

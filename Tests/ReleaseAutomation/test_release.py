@@ -35,7 +35,7 @@ class FakeAPI:
         for name in ("GAMES", "GAMES_PUZZLE"):
             self.add(resource("appCategories", name))
         self.pre = self.add(resource("preReleaseVersions", "pre", {"version": "0.1.0", "platform": "IOS"}))
-        self.add(resource("builds", "build", {"version": "4", "processingState": "VALID", "expired": False, "usesNonExemptEncryption": False},
+        self.add(resource("builds", "build", {"version": identity("ios")["build"], "processingState": "VALID", "expired": False, "usesNonExemptEncryption": False},
                           {"app": ("apps", "app"), "preReleaseVersion": ("preReleaseVersions", "pre")}))
         self.add(resource("appInfos", "info", {"state": "PREPARE_FOR_SUBMISSION"}, {"app": ("apps", "app")}))
         self.add(resource("ageRatingDeclarations", "age", {}, {"appInfo": ("appInfos", "info")}))
@@ -261,7 +261,7 @@ class StateTests(unittest.TestCase):
     def test_mac_initial_draft_uses_only_matching_native_mac_build(self):
         initial = self.api.create("appStoreVersions", {"versionString": "1.0", "platform": "MAC_OS"}, {"app": ("apps", "app")})
         self.api.add(resource("preReleaseVersions", "mac-pre", {"version": "0.1.0", "platform": "MAC_OS"}))
-        self.api.add(resource("builds", "mac-build", {"version": "4", "processingState": "VALID", "expired": False},
+        self.api.add(resource("builds", "mac-build", {"version": identity("ios")["build"], "processingState": "VALID", "expired": False},
                               {"app": ("apps", "app"), "preReleaseVersion": ("preReleaseVersions", "mac-pre")}))
         mac = Store(self.api, identity("macos"), self.config, {})
         version = mac.ensure_version()
@@ -359,19 +359,19 @@ class StateTests(unittest.TestCase):
 
     def test_upload_receipt_prevents_duplicate_before_build_is_visible(self):
         self.api.records.pop(("builds", "build"))
-        self.api.add(resource("buildUploads", "receipt", {"cfBundleShortVersionString": "0.1.0", "cfBundleVersion": "4", "platform": "IOS", "state": {"state": "PROCESSING"}}, {"app": ("apps", "app")}))
+        self.api.add(resource("buildUploads", "receipt", {"cfBundleShortVersionString": "0.1.0", "cfBundleVersion": self.ident["build"], "platform": "IOS", "state": {"state": "PROCESSING"}}, {"app": ("apps", "app")}))
         self.assertIsNone(self.store.find_build())
         self.assertEqual(self.store.find_upload()["id"], "receipt")
         self.assertIn("ALREADY_RECEIVED", self.report["upload"])
 
     def test_failed_upload_receipt_is_not_deleted_or_overwritten(self):
-        self.api.add(resource("buildUploads", "receipt", {"cfBundleShortVersionString": "0.1.0", "cfBundleVersion": "4", "platform": "IOS", "state": {"state": "FAILED"}}, {"app": ("apps", "app")}))
+        self.api.add(resource("buildUploads", "receipt", {"cfBundleShortVersionString": "0.1.0", "cfBundleVersion": self.ident["build"], "platform": "IOS", "state": {"state": "FAILED"}}, {"app": ("apps", "app")}))
         with self.assertRaises(NeedsAction):
             self.store.find_upload()
         self.assertFalse(any(m == "DELETE" for m, _ in self.api.calls))
 
     def test_receipt_of_another_version_is_ignored(self):
-        self.api.add(resource("buildUploads", "receipt", {"cfBundleShortVersionString": "0.2.0", "cfBundleVersion": "4", "platform": "IOS", "state": {"state": "PROCESSING"}}, {"app": ("apps", "app")}))
+        self.api.add(resource("buildUploads", "receipt", {"cfBundleShortVersionString": "0.2.0", "cfBundleVersion": self.ident["build"], "platform": "IOS", "state": {"state": "PROCESSING"}}, {"app": ("apps", "app")}))
         self.assertIsNone(self.store.find_upload())
 
     def test_bind_and_review_do_not_invent_phone_or_account(self):
