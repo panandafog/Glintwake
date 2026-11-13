@@ -11,7 +11,7 @@ import urllib.request
 
 from . import signing
 from .asc import ApiError, Client, Store, EDITABLE, payload, relationship, sanitized, screenshots, state
-from .metadata import NeedsAction, ReleaseError, Waiting, ROOT, identity, metadata, screenshot_files
+from .metadata import NeedsAction, ReleaseError, Waiting, ROOT, asc_locale, identity, metadata, screenshot_files
 
 STAGES = ("init", "probe", "build", "upload", "wait", "metadata", "review", "draft", "status", "summary", "cleanup")
 
@@ -56,7 +56,7 @@ def verify_remote(store, version, build, localizations):
     locales = store.api.list(f"/v1/appStoreVersions/{version['id']}/appStoreVersionLocalizations", {"limit": 200})
     by_locale = {l["attributes"]["locale"]: l for l in locales}
     for locale, expected in localizations.items():
-        current = by_locale.get(locale)
+        current = by_locale.get(asc_locale(locale))
         if not current or any(current["attributes"].get(k) != value for k, value in expected.items()
                               if k not in {"name", "subtitle", "privacyPolicyUrl"}):
             raise NeedsAction("App Store localized version metadata differs from the repository. Rerun metadata while the version is editable.")

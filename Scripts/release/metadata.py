@@ -8,6 +8,8 @@ import yaml
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 PLATFORMS = {"ios": "IOS", "macos": "MAC_OS"}
+# Repository folders use regional identifiers; ASC uses its own locale shortcodes.
+ASC_LOCALES = {"en-US": "en-US", "ru-RU": "ru"}
 AGE_BOOLEAN_FIELDS = {
     "advertising", "ageAssurance", "gambling", "healthOrWellnessTopics", "lootBox",
     "messagingAndChat", "parentalControls", "socialMedia", "unrestrictedWebAccess", "userGeneratedContent"
@@ -30,6 +32,14 @@ class NeedsAction(ReleaseError):
 
 class Waiting(ReleaseError):
     pass
+
+
+def asc_locale(locale):
+    """Translate only at the API boundary; keep asset/release-note paths intact."""
+    try:
+        return ASC_LOCALES[locale]
+    except KeyError:
+        raise ReleaseError(f"No App Store Connect locale mapping for {locale}.") from None
 
 
 def complete_age_answers(configured, existing):

@@ -9,7 +9,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from .metadata import NeedsAction, ReleaseError, Waiting, complete_age_answers, release_notes
+from .metadata import NeedsAction, ReleaseError, Waiting, asc_locale, complete_age_answers, release_notes
 
 ORIGIN = "https://api.appstoreconnect.apple.com"
 EDITABLE = {"PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED", "METADATA_REJECTED", "INVALID_BINARY"}
@@ -348,7 +348,7 @@ class Store:
         locales = self.api.list(f"/v1/appInfos/{info['id']}/appInfoLocalizations", {"limit": 200})
         by_locale = {l["attributes"]["locale"]: l for l in locales}
         for locale, expected in localizations.items():
-            current = by_locale.get(locale)
+            current = by_locale.get(asc_locale(locale))
             if not current or any(current["attributes"].get(k) != expected[k] for k in ("name", "subtitle", "privacyPolicyUrl")):
                 raise NeedsAction("Shared App Information differs from the repository. Edit it in a permitted draft state; reviewed/live information was preserved.")
         for key, expected in self.config.get("appInfoCategories", {}).items():
@@ -376,6 +376,7 @@ class Store:
         self.report["ageRating"] = "SUCCEEDED (complete answers; rating calculated by Apple)"
 
     def upsert_locale(self, parent, relationship_name, kind, locale, attrs):
+        locale = asc_locale(locale)
         existing = self.api.list(f"/v1/{parent['type']}/{parent['id']}/{relationship_name}", {"limit": 200})
         matches = [x for x in existing if x["attributes"]["locale"] == locale]
         if len(matches) > 1:
