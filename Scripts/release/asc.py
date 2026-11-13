@@ -259,6 +259,16 @@ class Store:
                     return version
             raise
 
+    def prepare_upload_platform(self):
+        """Register a missing platform before Transporter resolves its Apple ID.
+
+        Existing versions, including initial placeholders, are left alone here;
+        their preparation still happens after the build has been processed.
+        """
+        self.guard()
+        if not self.versions():
+            self.ensure_version()
+
     def reuse_initial_draft(self, versions):
         """Adopt only ASC's empty initial version placeholder, never another release."""
         if len(versions) != 1:

@@ -200,6 +200,7 @@ def main(argv=None):
                     if os.environ.get("ASC_ALLOW_UPLOAD") != "1":
                         raise NeedsAction("Binary upload is disabled. Dispatch the release workflow explicitly; never upload during local tests.")
                     artifact = signing.binary(path, ident)
+                    store.prepare_upload_platform()
                     env = os.environ | {"ASC_BINARY_PATH": str(artifact), "ASC_PLATFORM": ident["platform"], "ASC_BUNDLE_ID": ident["bundleId"],
                                         "FASTLANE_SKIP_UPDATE_CHECK": "1", "FASTLANE_HIDE_CHANGELOG": "1", "FASTLANE_OPT_OUT_USAGE": "1",
                                         "FASTLANE_DISABLE_COLORS": "1", "CI": "true"}

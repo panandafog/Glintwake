@@ -354,7 +354,7 @@ Apple опубликует/подтвердит поддерживаемые и�
 
 Выполнено 2026-11-13 без Apple credentials:
 
-- 71 offline-тест, включая полный fake-API проход до draft, повторы, возрастную
+- 74 offline-теста, включая полный fake-API проход до draft, повторы, возрастную
   анкету по фактическому ответу Apple 409 и безопасную
   обработку первоначального пустого черновика, прошли.
 - `actionlint 1.7.12` проверил оба workflow; Ruby syntax check прошёл.
@@ -381,12 +381,20 @@ API, пересылка assets и review states моделируются fake-с
 Проверяются повторы, ошибки/timeout, неверный platform/build/profile, сохранение
 пустых опциональных полей, отсутствие submit/publish, утечки секретов и матрица PNG.
 
-Требуют **первого реального запуска с разрешения владельца**: сертификаты и
-профили команды, подпись/export конкретным Xcode runner, проверка Transporter,
-время обработки Apple, права API key, принятие PNG в слотах ASC, actual draft
-validation и фактический `READY_FOR_REVIEW`. До этого end-to-end успех не заявлен.
-Доступ к карточке, телефону и GitHub Secrets в реализации не предоставлялся;
-реальная доставка, dispatch, push, review submission и publication не выполнялись.
+Реальный запуск №7, build 5 (2026-11-13): iOS прошла archive/export с distribution
+подписью, transport, обработку Apple, metadata/screenshots и проверку версии/draft
+в `READY_FOR_REVIEW`. На ревью ничего не отправлено. Mac archive/export `.pkg`
+также прошёл, но transport остановился: платформа MAC_OS ещё не зарегистрирована
+в карточке приложения (`Cannot determine the Apple ID ... platform MAC_OS`).
+Теперь перед transport, после проверки подписанного артефакта, workflow создаёт
+первую версию отсутствующей платформы через `POST appStoreVersions`. Это способ
+[добавить платформу через API](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-platforms).
+Существующие platform versions, включая исходные `1.0` placeholders, на этом этапе
+не меняются. Active review сохраняется; регистрация при повторе не дублируется.
+Для продолжения Mac достаточно нового запуска `macos` / `upload`, build 5,
+`artifact_run_id=43455623372`: `.pkg` уже сохранён до неудачного transport.
+Обработка Mac, metadata и итоговая готовность Mac требуют успешного повторного
+прогона. Submit for Review и публикация остаются ручными действиями владельца.
 
 ## Проверенные официальные источники
 

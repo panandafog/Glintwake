@@ -439,6 +439,36 @@ class StateTests(unittest.TestCase):
         mac.metadata(mac.ensure_version(), self.locales, self.copyright)
         self.assertFalse(any(m == "PATCH" and any(part in p for part in ("/appInfos/", "/appInfoLocalizations/", "/ageRatingDeclarations/")) for m, p in self.api.calls))
 
+    def test_missing_mac_platform_is_registered_before_first_upload(self):
+        mac = Store(self.api, identity("macos"), self.config, {}, sleep=self.tick, clock=lambda: self.time)
+        mac.prepare_upload_platform()
+        mac.prepare_upload_platform()
+        versions = mac.versions()
+        self.assertEqual(len(versions), 1)
+        self.assertEqual(versions[0]["attributes"]["platform"], "MAC_OS")
+        self.assertEqual(versions[0]["attributes"]["versionString"], mac.identity["version"])
+        self.assertEqual(versions[0]["attributes"]["releaseType"], "MANUAL")
+        self.assertIsNone(mac.find_build())
+        self.assertEqual(self.api.calls.count(("POST", "/v1/appStoreVersions")), 1)
+
+    def test_upload_registration_preserves_existing_initial_placeholder(self):
+        initial = self.api.create("appStoreVersions", {"platform": "IOS", "versionString": "1.0"}, {"app": ("apps", "app")})
+        self.api.records.pop(("builds", "build"))
+        self.api.calls.clear()
+        self.store.prepare_upload_platform()
+        self.assertEqual(self.api.records["appStoreVersions", initial["id"]]["attributes"]["versionString"], "1.0")
+        self.assertFalse(any(method in {"POST", "PATCH", "DELETE"} for method, _ in self.api.calls))
+
+    def test_upload_registration_preserves_platform_in_active_review(self):
+        self.api.create("reviewSubmissions", {"platform": "IOS"}, {"app": ("apps", "app")})
+        for (kind, _), value in self.api.records.items():
+            if kind == "reviewSubmissions":
+                value["attributes"]["state"] = "IN_REVIEW"
+        self.api.calls.clear()
+        with self.assertRaises(NeedsAction):
+            self.store.prepare_upload_platform()
+        self.assertFalse(any(method in {"POST", "PATCH", "DELETE"} for method, _ in self.api.calls))
+
     def test_draft_creation_is_idempotent_and_never_submits(self):
         version = self.store.ensure_version()
         build = self.store.find_build()
