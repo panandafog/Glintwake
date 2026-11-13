@@ -16,7 +16,7 @@ from Scripts.release.asc import (ApiError, Client, Store, Token, payload, relati
                                  sanitized, screenshots, upload_asset_operations)
 from Scripts.release.cli import summary, verify_remote
 from Scripts.release.metadata import (NeedsAction, ReleaseError, Waiting, ROOT, identity,
-                                      metadata, release_notes, screenshot_files)
+                                      metadata, release_notes, screenshot_files, complete_age_answers)
 from Scripts.release.signing import binary, check_profile
 from Scripts.release.artifact_source import validate_run
 
@@ -127,6 +127,64 @@ class StateTests(unittest.TestCase):
 
     def tick(self, value):
         self.time += value
+
+    def test_initial_age_declaration_covers_fields_reported_by_live_apple_409(self):
+        # Independent regression fixture from the first real Apple validation
+        # response: the old seven-boolean payload omitted all sixteen below.
+        required_by_apple = {
+            "medicalOrTreatmentInformation", "horrorOrFearThemes", "violenceCartoonOrFantasy",
+            "violenceRealisticProlongedGraphicOrSadistic", "gunsOrOtherWeapons", "profanityOrCrudeHumor",
+            "ageAssurance", "gamblingSimulated", "contests", "healthOrWellnessTopics", "sexualContentOrNudity",
+            "alcoholTobaccoOrDrugUseOrReferences", "parentalControls", "matureOrSuggestiveThemes",
+            "sexualContentGraphicAndNudity", "violenceRealistic"
+        }
+        original = self.api.update
+        def apple_update(resource, attrs=None, rels=None):
+            if resource["type"] == "ageRatingDeclarations":
+                self.assertFalse(required_by_apple - attrs.keys())
+                self.assertEqual(len(attrs), 23)
+                self.assertNotIn("kidsAgeBand", attrs)
+                self.assertNotIn("ageRatingOverrideV2", attrs)
+            return original(resource, attrs, rels)
+        with patch.object(self.api, "update", side_effect=apple_update):
+            self.store.metadata(self.store.ensure_version(), self.locales, self.copyright)
+        self.assertIn("SUCCEEDED", self.report["ageRating"])
+
+    def test_unspecified_age_overrides_are_preserved(self):
+        self.api.records["ageRatingDeclarations", "age"]["attributes"]["ageRatingOverrideV2"] = "NINE_PLUS"
+        self.store.configure_age_rating(self.api.get("/v1/appInfos/info"))
+        self.assertEqual(self.api.records["ageRatingDeclarations", "age"]["attributes"]["ageRatingOverrideV2"], "NINE_PLUS")
+
+    def test_partial_config_reuses_explicit_existing_answers_including_false(self):
+        existing = self.config["ageRating"].copy()
+        result = complete_age_answers({"advertising": False}, existing)
+        self.assertEqual(result, existing)
+        self.assertIs(result["ageAssurance"], False)
+
+    def test_missing_age_answer_is_not_guessed(self):
+        self.store.config = {**self.config, "ageRating": {k: v for k, v in self.config["ageRating"].items() if k != "medicalOrTreatmentInformation"}}
+        with self.assertRaises(NeedsAction) as error:
+            self.store.configure_age_rating(self.api.get("/v1/appInfos/info"))
+        self.assertIn("medicalOrTreatmentInformation", str(error.exception))
+        self.assertFalse(any(method == "PATCH" for method, _ in self.api.calls))
+
+    def test_invalid_age_answer_types_are_rejected_before_patch(self):
+        for values in ({"ageAssurance": "false"}, {"contests": "AUTOMATIC"}, {"contests": []}):
+            with self.subTest(values=values), self.assertRaises(NeedsAction):
+                complete_age_answers(self.config["ageRating"] | values, {})
+
+    def test_age_answers_are_not_patched_again_when_unchanged(self):
+        info = self.api.get("/v1/appInfos/info")
+        self.store.configure_age_rating(info)
+        self.api.calls.clear()
+        self.store.configure_age_rating(info)
+        self.assertFalse(any(method == "PATCH" for method, _ in self.api.calls))
+
+    def test_age_success_requires_readback_of_supplied_answers(self):
+        with patch.object(self.api, "update", return_value=resource("ageRatingDeclarations", "age", {})):
+            with self.assertRaises(NeedsAction):
+                self.store.configure_age_rating(self.api.get("/v1/appInfos/info"))
+        self.assertNotIn("SUCCEEDED", self.report["ageRating"])
 
     def test_create_version_once_and_preserve_existing_release_setting(self):
         version = self.store.ensure_version()
