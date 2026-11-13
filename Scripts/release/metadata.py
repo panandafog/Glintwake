@@ -8,6 +8,16 @@ import yaml
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 PLATFORMS = {"ios": "IOS", "macos": "MAC_OS"}
+AGE_BOOLEAN_FIELDS = {
+    "advertising", "ageAssurance", "gambling", "healthOrWellnessTopics", "lootBox",
+    "messagingAndChat", "parentalControls", "socialMedia", "unrestrictedWebAccess", "userGeneratedContent"
+}
+AGE_FREQUENCY_FIELDS = {
+    "alcoholTobaccoOrDrugUseOrReferences", "contests", "gamblingSimulated", "gunsOrOtherWeapons",
+    "horrorOrFearThemes", "matureOrSuggestiveThemes", "medicalOrTreatmentInformation",
+    "profanityOrCrudeHumor", "sexualContentGraphicAndNudity", "sexualContentOrNudity",
+    "violenceCartoonOrFantasy", "violenceRealistic", "violenceRealisticProlongedGraphicOrSadistic"
+}
 
 
 class ReleaseError(Exception):
@@ -20,6 +30,23 @@ class NeedsAction(ReleaseError):
 
 class Waiting(ReleaseError):
     pass
+
+
+def complete_age_answers(configured, existing):
+    """Supply the full initial declaration without guessing omitted answers."""
+    fields = AGE_BOOLEAN_FIELDS | AGE_FREQUENCY_FIELDS
+    result = {key: existing[key] for key in fields if existing.get(key) is not None}
+    result.update({key: value for key, value in configured.items() if value is not None})
+    missing = sorted(fields - result.keys())
+    if missing:
+        raise NeedsAction("Age-rating declaration needs explicit answers in AppStore/release.json or existing ASC data: " + ", ".join(missing))
+    frequencies = {"NONE", "INFREQUENT_OR_MILD", "FREQUENT_OR_INTENSE", "INFREQUENT", "FREQUENT"}
+    invalid = sorted(key for key in fields if
+                     (key in AGE_BOOLEAN_FIELDS and type(result[key]) is not bool) or
+                     (key in AGE_FREQUENCY_FIELDS and (not isinstance(result[key], str) or result[key] not in frequencies)))
+    if invalid:
+        raise NeedsAction("Invalid age-rating answer types/values: " + ", ".join(invalid))
+    return result
 
 
 def identity(platform, build_override="", root=ROOT):

@@ -111,7 +111,7 @@ def summary(report, path):
     review_url = url + "/appreview" if report.get("appId") else url
     text = [f"## {ident['name']} — {ident['platform']}", "", "| Field | Status |", "| --- | --- |"]
     for name, value in [("Bundle ID", ident["bundleId"]), ("Version", ident["version"]), ("Build", ident["build"]),
-                        *[(k, report.get(k, "NOT_RUN")) for k in ("archive", "upload", "processing", "availableVersions", "versionPreparation", "metadata", "screenshots", "review", "draft", "versionState", "draftState", "verification", "outcome")]]:
+                        *[(k, report.get(k, "NOT_RUN")) for k in ("archive", "upload", "processing", "availableVersions", "versionPreparation", "ageRating", "metadata", "screenshots", "review", "draft", "versionState", "draftState", "verification", "outcome")]]:
         text.append(f"| {name} | {str(value).replace('|', '/').replace(chr(10), ' ')} |")
     text += ["", f"[Open App Store Connect]({url}) · [App Review]({review_url})", "", "### Remaining actions", ""]
     if report.get("outcome") == "SUCCEEDED" and report.get("verification", "").startswith("READY_FOR_REVIEW"):

@@ -9,7 +9,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from .metadata import NeedsAction, ReleaseError, Waiting, release_notes
+from .metadata import NeedsAction, ReleaseError, Waiting, complete_age_answers, release_notes
 
 ORIGIN = "https://api.appstoreconnect.apple.com"
 EDITABLE = {"PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED", "METADATA_REJECTED", "INVALID_BINARY"}
@@ -361,6 +361,19 @@ class Store:
             age = self.api.get(f"/v1/appInfos/{info['id']}/ageRatingDeclaration")
             if any(age["attributes"].get(k) != v for k, v in self.config["ageRating"].items()):
                 raise NeedsAction("Shared age-rating answers differ. Resolve the declaration while it is editable.")
+            self.report["ageRating"] = "VERIFIED (read-only shared declaration)"
+
+    def configure_age_rating(self, info):
+        age = self.api.get(f"/v1/appInfos/{info['id']}/ageRatingDeclaration")
+        self.report["ageRating"] = "CHECKING_ANSWERS"
+        answers = complete_age_answers(self.config["ageRating"], age["attributes"])
+        if any(age["attributes"].get(key) != value for key, value in answers.items()):
+            self.report["ageRating"] = "UPDATING"
+            self.api.update(age, answers)
+        actual = self.api.get(f"/v1/appInfos/{info['id']}/ageRatingDeclaration")
+        if any(actual["attributes"].get(key) != value for key, value in answers.items()):
+            raise NeedsAction("Apple did not retain the supplied age-rating answers. Inspect App Information before retrying.")
+        self.report["ageRating"] = "SUCCEEDED (complete answers; rating calculated by Apple)"
 
     def upsert_locale(self, parent, relationship_name, kind, locale, attrs):
         existing = self.api.list(f"/v1/{parent['type']}/{parent['id']}/{relationship_name}", {"limit": 200})
@@ -389,8 +402,7 @@ class Store:
             self.api.update(info, rels={key: ("appCategories", value) for key, value in categories.items()})
         self.api.update(version, {"copyright": copyright})
         if self.config.get("ageRating") and writable:
-            age = self.api.get(f"/v1/appInfos/{info['id']}/ageRatingDeclaration")
-            self.api.update(age, self.config["ageRating"])
+            self.configure_age_rating(info)
         result = {}
         update = any(state(v) in {"READY_FOR_DISTRIBUTION", "READY_FOR_SALE", "REPLACED_WITH_NEW_VERSION"} for v in self.versions())
         for locale, attrs in localizations.items():
