@@ -450,6 +450,25 @@ class StateTests(unittest.TestCase):
         self.assertEqual(sum(m == "POST" and p == "/v1/reviewSubmissionItems" for m, p in self.api.calls), 1)
         self.assertFalse(any(m == "PATCH" and "/reviewSubmissions" in p for m, p in self.api.calls))
 
+    def test_blocked_review_item_preserves_draft_and_reuses_it_after_owner_setup(self):
+        version = self.store.ensure_version()
+        build = self.store.find_build()
+        self.store.bind(version, build)
+        create = self.api.create
+        def blocked(kind, attrs=None, rels=None):
+            if kind == "reviewSubmissionItems":
+                raise ApiError(409, [{"code": "STATE_ERROR.ENTITY_STATE_INVALID"}], "POST /v1/reviewSubmissionItems")
+            return create(kind, attrs, rels)
+        with patch.object(self.api, "create", side_effect=blocked), self.assertRaises(ApiError):
+            self.store.draft(version, build)
+        draft_id = self.report["draftId"]
+        self.assertEqual(self.report["draftState"], "READY_FOR_REVIEW")
+        self.assertEqual(self.report["versionState"], "PREPARE_FOR_SUBMISSION")
+        self.assertNotIn("verification", self.report)
+        self.store.draft(version, build)
+        self.assertEqual(self.report["draftId"], draft_id)
+        self.assertEqual(sum(m == "POST" and p == "/v1/reviewSubmissions" for m, p in self.api.calls), 1)
+
     def test_draft_wrong_build_is_rejected(self):
         version = self.store.ensure_version()
         self.store.bind(version, self.store.find_build())
@@ -575,6 +594,52 @@ class TransportTests(unittest.TestCase):
             Client(lambda: "fake", Opener(error)).create("reviewSubmissions")
         self.assertNotIn("private demo password", str(captured.exception))
         self.assertIn("ENTITY_ERROR", str(captured.exception))
+
+    def test_review_item_error_reports_nested_apple_prerequisites(self):
+        errors = [{"code": "STATE_ERROR.ENTITY_STATE_INVALID", "detail": "This resource cannot be reviewed; check associated errors.",
+                   "meta": {"associatedErrors": {"/apps/app": [
+                       {"code": "STATE_ERROR.APP_PRIVACY_REQUIRED", "detail": "An Admin must provide privacy practices in App Privacy."},
+                       {"code": "STATE_ERROR.PRICE_REQUIRED", "detail": "You must choose a price tier in Pricing."},
+                       {"code": "STATE_ERROR.CONTENT_RIGHTS_REQUIRED", "detail": "Set up Content Rights Information in App Information."}
+                   ]}, "unrelated": {"detail": "private unrelated body"}}}]
+        response = urllib.error.HTTPError("", 409, "", {}, io.BytesIO(json.dumps({"errors": errors}).encode()))
+        with self.assertRaises(ApiError) as captured:
+            Client(lambda: "fake", Opener(response)).create("reviewSubmissionItems", rels={"reviewSubmission": ("reviewSubmissions", "draft")})
+        error = captured.exception
+        self.assertEqual(len(error.codes), 4)
+        self.assertIn("App Privacy", str(error))
+        self.assertIn("price tier", str(error))
+        self.assertIn("Content Rights", str(error))
+        self.assertNotIn("private unrelated body", str(error))
+
+    def test_review_validation_redacts_sensitive_details(self):
+        errors = [{"code": "STATE_ERROR", "detail": "Check settings.", "meta": {"associatedErrors": {"/apps/app": [
+            {"code": "INVALID", "detail": "Value is 79991234567", "source": {"pointer": "/data/attributes/contactPhone"}},
+            {"code": "INVALID", "detail": "Incorrect demoAccountPassword: private-demo-value"},
+            {"code": "INVALID", "detail": "Contact user@example.org at +1 (999) 123-4567."},
+            {"code": "INVALID", "detail": "Owner value: test-sensitive-value"}
+        ]}}}]
+        with patch.dict(os.environ, {"ASC_REVIEW_CONTACT_PHONE": "test-sensitive-value"}):
+            error = ApiError(409, errors, "POST /v1/reviewSubmissionItems")
+        for secret in ("79991234567", "private-demo-value", "user@example.org", "+1 (999) 123-4567", "test-sensitive-value"):
+            self.assertNotIn(secret, str(error))
+        self.assertIn("[REDACTED", str(error))
+
+    def test_nested_errors_remain_codes_only_for_metadata_endpoints(self):
+        error = ApiError(409, [{"code": "ENTITY_ERROR", "detail": "private metadata value", "meta": {"associatedErrors": {
+            "/appStoreReviewDetails/review": [{"code": "ENTITY_ERROR.ATTRIBUTE.INVALID", "detail": "private demo password",
+                                                "source": {"pointer": "/data/attributes/demoAccountPassword"}}]}}}],
+                         "PATCH /v1/appStoreReviewDetails/review")
+        self.assertEqual(error.codes, ["ENTITY_ERROR", "ENTITY_ERROR.ATTRIBUTE.INVALID"])
+        self.assertIn("/data/attributes/demoAccountPassword", error.fields)
+        self.assertNotIn("private", str(error))
+        self.assertEqual(error.details, [])
+
+    def test_apple_validation_output_is_bounded(self):
+        error = ApiError(409, [{"code": "STATE_ERROR", "detail": "x" * 1000 + str(i)} for i in range(100)], "POST /v1/reviewSubmissionItems")
+        self.assertEqual(len(error.codes), 20)
+        self.assertTrue(all(len(detail) <= 500 for detail in error.details))
+        self.assertLess(len(str(error)), 11000)
 
     def test_unauthorized_api_call_does_not_retry_forever(self):
         opener = Opener(urllib.error.HTTPError("", 401, "", {}, io.BytesIO(b"{}")))
