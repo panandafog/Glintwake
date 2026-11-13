@@ -1,6 +1,7 @@
 """Small allowlisted Apple API client. It cannot submit or publish a release."""
 import base64
 import hashlib
+import itertools
 import json
 import os
 import re
@@ -58,11 +59,51 @@ def sanitized(value):
 class ApiError(ReleaseError):
     def __init__(self, status, errors=None, operation=""):
         self.status = status
-        # Apple's detailed messages can echo request values; retain codes and
-        # field pointers, never dump a body containing review credentials.
-        self.codes = [e.get("code", "UNKNOWN") for e in errors or []]
-        self.fields = [e.get("source", {}).get("pointer", "") for e in errors or []]
-        super().__init__(f"Apple API HTTP {status} {operation}; codes={','.join(self.codes)}; fields={','.join(self.fields)}")
+        entries = list(itertools.islice(associated_errors(errors), 20))
+        self.codes = [e.get("code", "UNKNOWN") for e in entries]
+        self.fields = [(e.get("source") or {}).get("pointer", "") for e in entries]
+        # Review-item requests contain resource IDs only. Apple's nested
+        # validation explains missing owner declarations; without it every
+        # prerequisite failure is reduced to ENTITY_STATE_INVALID. Other
+        # endpoints can echo credentials/metadata and remain codes-only.
+        self.details = []
+        if status == 409 and operation == "POST /v1/reviewSubmissionItems":
+            for entry in entries:
+                detail = " ".join(str(entry.get(k) or "") for k in ("title", "detail")).strip()
+                pointer = (entry.get("source") or {}).get("pointer", "")
+                if re.search(r"password|secret|token|contactPhone|contactEmail|demoAccount|authorization|private.key", detail + " " + pointer, re.I):
+                    detail = "Sensitive validation detail omitted; inspect App Store Connect."
+                detail = sanitized(detail)
+                detail = re.sub(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", "[REDACTED EMAIL]", detail)
+                detail = re.sub(r"(?<!\w)\+\d[\d ()-]{6,}\d", "[REDACTED PHONE]", detail)
+                detail = " ".join(detail.split())[:500]
+                if detail and detail not in self.details:
+                    self.details.append(detail)
+        message = f"Apple API HTTP {status} {operation}; codes={','.join(self.codes)}; fields={','.join(self.fields)}"
+        if self.details:
+            message += "; validation=" + " | ".join(self.details)
+        super().__init__(sanitized(message))
+
+
+def associated_errors(errors, depth=0):
+    """Walk only Apple's error containers, never arbitrary metadata or values."""
+    if depth > 4:
+        return
+    if isinstance(errors, dict):
+        errors = [errors]
+    if not isinstance(errors, list):
+        return
+    for entry in errors:
+        if not isinstance(entry, dict):
+            continue
+        yield entry
+        meta = entry.get("meta")
+        associated = meta.get("associatedErrors", {}) if isinstance(meta, dict) else {}
+        if isinstance(associated, dict):
+            for nested in associated.values():
+                yield from associated_errors(nested, depth + 1)
+        elif isinstance(associated, list):
+            yield from associated_errors(associated, depth + 1)
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -458,6 +499,7 @@ class Store:
         if len(drafts) > 1:
             raise NeedsAction("Several drafts exist for this platform. Choose/resolve them in ASC first.")
         submission = drafts[0] if drafts else self.api.create("reviewSubmissions", {"platform": self.identity["platform"]}, {"app": ("apps", self.app["id"])})
+        self.report.update(draftId=submission["id"], draftState=state(submission), versionState=state(current))
         items = self.api.list(f"/v1/reviewSubmissions/{submission['id']}/items", {"include": "appStoreVersion", "limit": 200})
         other = [i for i in items if relationship(i, "appStoreVersion") not in (None, version["id"]) and state(i) != "REMOVED"]
         if other:
