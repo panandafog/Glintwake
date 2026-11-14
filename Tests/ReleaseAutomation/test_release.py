@@ -799,6 +799,9 @@ class ConfigTests(unittest.TestCase):
             artifact = export / "Glintwake.ipa"; artifact.write_bytes(b"test artifact")
             import hashlib
             manifest = dict(identity=ident, file=artifact.name, sha256=hashlib.sha256(artifact.read_bytes()).hexdigest())
+            source = dict(repository="panandafog/Glintwake", sha="a" * 40, runId="123", workflow=".github/workflows/app-store-release.yml")
+            manifest["source"] = source
+            (root / "artifact-source.json").write_text(json.dumps(source))
             (export / "artifact.json").write_text(json.dumps(manifest))
             self.assertEqual(binary(root, ident), artifact)
             artifact.write_bytes(b"tampered")
@@ -807,10 +810,11 @@ class ConfigTests(unittest.TestCase):
 
     def test_artifact_provenance_rejects_prs_forks_and_wrong_workflows(self):
         valid = dict(repository={"full_name": "owner/repo"}, head_repository={"full_name": "owner/repo"},
-                     head_branch="master", event="workflow_dispatch", path=".github/workflows/app-store-release.yml", status="completed")
+                     head_branch="master", event="workflow_dispatch", path=".github/workflows/app-store-release.yml", status="completed", head_sha="a" * 40)
         validate_run(valid, "owner/repo", "master")
+        validate_run(valid | {"head_branch": "dev"}, "owner/repo", "master")
         for change in ({"event": "pull_request"}, {"head_branch": "feature"}, {"head_repository": {"full_name": "fork/repo"}},
-                       {"path": ".github/workflows/other.yml"}, {"status": "in_progress"}):
+                       {"path": ".github/workflows/other.yml"}, {"status": "in_progress"}, {"head_sha": "invalid"}):
             with self.subTest(change=change), self.assertRaises(ReleaseError):
                 validate_run(valid | change, "owner/repo", "master")
 

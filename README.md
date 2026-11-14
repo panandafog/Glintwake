@@ -153,3 +153,7 @@ Regenerate the icon with:
 xcrun swift Scripts/render-icon.swift Assets/Assets.xcassets/AppIcon.appiconset
 ```
 
+CI runs solver/generator tests and unsigned native Release builds on dev pushes
+and pull requests. See [CI](Docs/CI.md). App Store delivery is split into manual
+[upload and review workflows](Docs/APP_STORE_RELEASE_AUTOMATION.md), with shared
+build selection, early signing audits and resumable platform reports.

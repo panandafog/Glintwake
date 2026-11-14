@@ -11,6 +11,7 @@ import urllib.parse
 import urllib.request
 
 from .metadata import NeedsAction, ReleaseError, Waiting, asc_locale, complete_age_answers, release_notes
+from .diagnostics import sanitized
 
 ORIGIN = "https://api.appstoreconnect.apple.com"
 EDITABLE = {"PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED", "METADATA_REJECTED", "INVALID_BINARY"}
@@ -19,7 +20,7 @@ ACTIVE = {"WAITING_FOR_REVIEW", "IN_REVIEW", "UNRESOLVED_ISSUES", "CANCELING", "
 # appStoreVersionSubmissions, release request, phased release or pricing endpoint.
 MUTATIONS = {
     "POST": [r"/v1/(appStoreVersions|appStoreVersionLocalizations|appInfoLocalizations|appStoreReviewDetails|appScreenshotSets|appScreenshots|reviewSubmissions|reviewSubmissionItems)"],
-    "PATCH": [r"/v1/(appStoreVersions|appStoreVersionLocalizations|appInfos|appInfoLocalizations|appStoreReviewDetails|appScreenshots|ageRatingDeclarations|builds)/[\w-]+",
+    "PATCH": [r"/v1/(appStoreVersions|appStoreVersionLocalizations|appInfos|appInfoLocalizations|appStoreReviewDetails|appScreenshots|ageRatingDeclarations)/[\w-]+",
               r"/v1/appScreenshotSets/[\w-]+/relationships/appScreenshots"],
     "DELETE": [r"/v1/appScreenshots/[\w-]+"]
 }
@@ -44,16 +45,6 @@ def payload(kind, attrs=None, rels=None, id=None):
     if rels:
         data["relationships"] = {key: {"data": {"type": typ, "id": value}} for key, (typ, value) in rels.items()}
     return {"data": data}
-
-
-def sanitized(value):
-    text = str(value)
-    for key, secret in os.environ.items():
-        if any(word in key for word in ("PASSWORD", "PRIVATE_KEY", "P12", "TOKEN", "CONTACT_PHONE", "DEMO_ACCOUNT")) and len(secret) > 3:
-            text = text.replace(secret, "[REDACTED]")
-    text = re.sub(r"-----BEGIN .*?PRIVATE KEY-----.*?-----END .*?PRIVATE KEY-----", "[REDACTED KEY]", text, flags=re.S)
-    text = re.sub(r"eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", "[REDACTED JWT]", text)
-    return text
 
 
 class ApiError(ReleaseError):
@@ -225,12 +216,17 @@ class Store:
     def guard(self, allow_ready=False):
         for submission in self.submissions():
             if state(submission) in ACTIVE:
-                raise NeedsAction("An active review submission exists for this platform. Resolve it in ASC; this workflow never cancels or removes it.")
+                raise NeedsAction("An active review submission exists for this platform. Resolve it in ASC; this workflow never cancels or removes it.",
+                                  code="ACTIVE_REVIEW",
+                                  next_action="Open App Review in App Store Connect and decide how to proceed with the active submission. Upload can run independently.")
         matches = [v for v in self.versions() if v["attributes"]["versionString"] == self.identity["version"]]
         if len(matches) > 1:
             raise ReleaseError("Ambiguous App Store version.")
         if matches and state(matches[0]) not in EDITABLE | ({"READY_FOR_REVIEW"} if allow_ready else set()):
-            raise NeedsAction(f"Version is {state(matches[0])}; use status mode. Draft items are not removed for editing.")
+            raise NeedsAction(f"Version is {state(matches[0])}; draft items are not removed for editing.",
+                              code="VERSION_NOT_EDITABLE",
+                              next_action="For Ready for Review, remove the version from its unsubmitted draft in App Store Connect before replacing its build or metadata. "
+                                          "For an already submitted/live version, resolve its state or prepare a new app version. Use Check status to verify an unchanged draft.")
         return matches[0] if matches else None
 
     def ensure_version(self):
@@ -265,7 +261,6 @@ class Store:
         Existing versions, including initial placeholders, are left alone here;
         their preparation still happens after the build has been processed.
         """
-        self.guard()
         if not self.versions():
             self.ensure_version()
 
@@ -366,6 +361,13 @@ class Store:
             raise NeedsAction("Apple has a failed/incomplete upload receipt for this exact build. Inspect build upload diagnostics before retrying; this workflow does not delete Apple upload records.")
         return None
 
+    def verify_encryption(self, build):
+        if build["attributes"].get("usesNonExemptEncryption") is not False:
+            raise NeedsAction("The exact Glintwake build has no matching encryption declaration. The game uses no non-exempt encryption; inspect this build in ASC.",
+                              code="EXPORT_COMPLIANCE_REQUIRED",
+                              next_action="Open this exact build in App Store Connect → TestFlight and check its Export Compliance and binary identity, then retry review with the same build number.")
+        self.report["encryption"] = "VERIFIED (non-exempt encryption: false; no answer changed)"
+
     def bind(self, version, build):
         self.guard()
         fresh = self.api.get(f"/v1/appStoreVersions/{version['id']}")
@@ -410,7 +412,8 @@ class Store:
                 raise NeedsAction("Shared App Information category differs; no live/reviewed fields were changed.")
         if self.config.get("ageRating"):
             age = self.api.get(f"/v1/appInfos/{info['id']}/ageRatingDeclaration")
-            if any(age["attributes"].get(k) != v for k, v in self.config["ageRating"].items()):
+            answers = complete_age_answers(self.config["ageRating"], age["attributes"])
+            if any(age["attributes"].get(k) != v for k, v in answers.items()):
                 raise NeedsAction("Shared age-rating answers differ. Resolve the declaration while it is editable.")
             self.report["ageRating"] = "VERIFIED (read-only shared declaration)"
 
@@ -552,6 +555,13 @@ def upload_asset_operations(operations, data, opener=None, sleep=time.sleep):
                 sleep(2 ** attempt)
 
 
+def managed_screenshot(asset):
+    # Friendly app-prefixed filenames may belong to the owner. Only our complete
+    # theme/scene/content-hash convention is an automation ownership marker.
+    return bool(re.fullmatch(r"glintwake-[a-z0-9-]+-[0-9a-f]{16}\.png",
+                             asset.get("attributes", {}).get("fileName", "")))
+
+
 def screenshots(store, localization, group, files):
     api = store.api
     store.guard()
@@ -562,15 +572,42 @@ def screenshots(store, localization, group, files):
     aset = matches[0] if matches else api.create("appScreenshotSets", {"screenshotDisplayType": group["displayType"]},
                                                 {"appStoreVersionLocalization": ("appStoreVersionLocalizations", localization["id"])})
     existing = api.list(f"/v1/appScreenshotSets/{aset['id']}/appScreenshots", {"limit": 200})
-    if any(not a["attributes"].get("fileName", "").startswith("glintwake-") for a in existing):
-        raise NeedsAction("Screenshot set contains unmanaged images. Review/migrate them once in ASC; existing images were preserved.")
+    expected_checksums = {hashlib.md5(f.read_bytes()).hexdigest() for f in files}
+    foreign = [a for a in existing if not managed_screenshot(a)
+               and a["attributes"].get("sourceFileChecksum", "").lower() not in expected_checksums]
+    if foreign:
+        raise NeedsAction("Screenshot set contains unrelated unmanaged images. Existing images were preserved; review this set in ASC.")
+    # Adopt identical manually uploaded PNGs without deleting or renaming them.
+    # This is important for an existing app, unlike the initial game release.
+    wanted_names = {"glintwake-" + f.stem + "-" + hashlib.sha256(f.read_bytes()).hexdigest()[:16] + ".png" for f in files}
+    # Apple permits at most ten reservations per set. Prune only our obsolete
+    # managed assets before replacements when otherwise capacity would be exceeded.
+    desired_hashes = expected_checksums
+    missing = sum(not any(a["attributes"].get("sourceFileChecksum", "").lower() == hashlib.md5(f.read_bytes()).hexdigest()
+                          or a["attributes"].get("fileName") == "glintwake-" + f.stem + "-" + hashlib.sha256(f.read_bytes()).hexdigest()[:16] + ".png"
+                          for a in existing) for f in files)
+    if len(existing) + missing > 10:
+        obsolete = [a for a in existing if managed_screenshot(a)
+                    and a["attributes"].get("fileName") not in wanted_names
+                    and a["attributes"].get("sourceFileChecksum", "").lower() not in desired_hashes]
+        for old in obsolete:
+            api.request("DELETE", "/v1/appScreenshots/" + old["id"])
+            existing.remove(old)
+        if len(existing) + missing > 10:
+            raise NeedsAction("Unmanaged/duplicate screenshots occupy the ten-image limit; review them in ASC. They were not deleted.")
     desired = []
     discarded = set()
-    for file in files:
+    for index, file in enumerate(files, 1):
+        locale = localization["attributes"]["locale"]
+        progress = f"Screenshots {locale} / {group['folder']} {index}/{len(files)} {file.parent.name}/{file.name}"
+        print(progress + " — checking", flush=True)
         data = file.read_bytes()
         checksum = hashlib.md5(data).hexdigest()
         name = "glintwake-" + file.stem + "-" + hashlib.sha256(data).hexdigest()[:16] + ".png"
         matches = [a for a in existing if a["attributes"].get("fileName") == name]
+        if not matches:
+            matches = [a for a in existing if a["attributes"].get("sourceFileChecksum", "").lower() == checksum
+                       and a["attributes"].get("assetDeliveryState", {}).get("state") == "COMPLETE"]
         if len(matches) > 1:
             raise NeedsAction("Duplicate managed screenshot reservations. Remove the duplicates in ASC first.")
         asset = matches[0] if matches else None
@@ -584,11 +621,13 @@ def screenshots(store, localization, group, files):
         if delivery == "COMPLETE" and asset["attributes"].get("sourceFileChecksum", "").lower() != checksum:
             raise ReleaseError("Completed screenshot checksum does not match local source.")
         if delivery not in {"COMPLETE", "UPLOAD_COMPLETE"}:
+            print(progress + " — uploading", flush=True)
             operations = asset["attributes"].get("uploadOperations")
             if not operations:
                 raise NeedsAction("Screenshot reservation has no upload operations. Retry metadata or inspect the reservation in ASC.")
             upload_asset_operations(operations, data)
             api.update(asset, {"uploaded": True, "sourceFileChecksum": checksum})
+        print(progress + " — " + ("reusing COMPLETE" if delivery == "COMPLETE" else "processing"), flush=True)
         deadline = store.clock() + store.config["assetTimeoutSeconds"]
         while True:
             fresh = api.get("/v1/appScreenshots/" + asset["id"])
@@ -603,10 +642,12 @@ def screenshots(store, localization, group, files):
                 raise Waiting("Apple screenshot processing is unfinished. Rerun metadata; uploaded assets will be reused.")
             store.sleep(5)
         desired.append(asset["id"])
+        print(progress + " — COMPLETE", flush=True)
     # Delete obsolete managed images only after all replacements are complete.
     store.guard()
     for old in existing:
-        if old["id"] not in desired and old["id"] not in discarded:
+        if (old["id"] not in desired and old["id"] not in discarded
+                and managed_screenshot(old)):
             api.request("DELETE", "/v1/appScreenshots/" + old["id"])
     api.request("PATCH", f"/v1/appScreenshotSets/{aset['id']}/relationships/appScreenshots",
                 {"data": [{"type": "appScreenshots", "id": id} for id in desired]})

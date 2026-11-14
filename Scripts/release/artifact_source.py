@@ -2,6 +2,7 @@
 import json
 import os
 import re
+import pathlib
 import urllib.request
 
 from .asc import NoRedirect
@@ -11,11 +12,12 @@ from .metadata import NeedsAction, ReleaseError
 def validate_run(run, repository, branch):
     if (run.get("repository", {}).get("full_name") != repository
             or run.get("head_repository", {}).get("full_name") != repository
-            or run.get("head_branch") != branch
+            or run.get("head_branch") not in {branch, "dev"}
             or run.get("event") != "workflow_dispatch"
             or run.get("path", "").split("@", 1)[0] != ".github/workflows/app-store-release.yml"
-            or run.get("status") != "completed"):
-        raise ReleaseError("Artifact source must be a completed manual release run of this repository's default branch, not a fork/PR/other workflow.")
+            or run.get("status") != "completed"
+            or not re.fullmatch(r"[0-9a-f]{40}", run.get("head_sha", ""))):
+        raise ReleaseError("Artifact source must be a completed manual upload run from this repository's default branch or dev, with a valid commit SHA; forks/PRs/other workflows are refused.")
 
 
 def main():
@@ -32,7 +34,12 @@ def main():
         validate_run(run, repository, os.environ["RELEASE_DEFAULT_BRANCH"])
     except OSError:
         raise ReleaseError("Cannot verify the signed artifact's GitHub run provenance. Nothing was downloaded or uploaded.") from None
-    print("Signed artifact source verified: trusted manual release run.")
+    source = dict(repository=repository, sha=run["head_sha"], runId=str(run["id"]),
+                  workflow=".github/workflows/app-store-release.yml")
+    target = pathlib.Path("Build/Release") / os.environ["RELEASE_PLATFORM"] / "artifact-source.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(source))
+    print("Signed artifact source verified: trusted manual release run and commit SHA.")
 
 
 if __name__ == "__main__":
