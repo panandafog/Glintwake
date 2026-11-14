@@ -1,6 +1,11 @@
 /* Glintwake interface and accessibility strings. */
 
 "App.Name" = "Glintwake";
+"About.Title" = "Об игре";
+"About.Description" = "Головоломка о скольжении, кристаллах и поиске идеального маршрута.";
+"About.Version" = "Версия %@ (сборка %@)";
+"About.Developer" = "Автор — Андрей Пантюхин";
+"About.Support" = "Поддержка";
 "Button.Done" = "Готово";
 "Button.Hint" = "Подсказка";
 "Button.NextRoute" = "Следующий уровень";

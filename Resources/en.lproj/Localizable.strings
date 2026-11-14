@@ -1,6 +1,11 @@
 /* Glintwake interface and accessibility strings. */
 
 "App.Name" = "Glintwake";
+"About.Title" = "About the game";
+"About.Description" = "A sliding puzzle about crystals and finding the perfect route.";
+"About.Version" = "Version %@ (build %@)";
+"About.Developer" = "Created by Andrei Pantiukhin";
+"About.Support" = "Support";
 "Button.Done" = "Done";
 "Button.Hint" = "Hint";
 "Button.NextRoute" = "Next level";

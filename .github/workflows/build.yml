@@ -1,0 +1,68 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: Solver and generator tests
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - run: swift test -c release
+  build:
+    name: Release build (${{ matrix.platform }})
+    runs-on: macos-26
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ios, macos]
+    env:
+      BUILD_PLATFORM: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Verify generated project
+        run: |
+          sh Scripts/xcodegen.sh generate
+          git diff --exit-code -- Glintwake.xcodeproj
+      - name: Compile and verify Release bundle without signing
+        shell: bash
+        run: |
+          set -o pipefail
+          destination='generic/platform=macOS'
+          product='Release'
+          if [[ "$BUILD_PLATFORM" == ios ]]; then
+            destination='generic/platform=iOS'
+            product='Release-iphoneos'
+          fi
+          mkdir -p Build/Diagnostics
+          xcodebuild -project Glintwake.xcodeproj -scheme Glintwake \
+            -configuration Release -destination "$destination" \
+            -derivedDataPath Build/DerivedData \
+            -resultBundlePath Build/Diagnostics/build.xcresult \
+            CODE_SIGNING_ALLOWED=NO build 2>&1 | tee Build/Diagnostics/build.log
+          python3 Scripts/verify-release.py "Build/DerivedData/Build/Products/$product/Glintwake.app"
+      - name: Preserve failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: build-diagnostics-${{ matrix.platform }}-${{ github.run_attempt }}
+          path: Build/Diagnostics/
+          if-no-files-found: ignore
+          retention-days: 7

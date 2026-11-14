@@ -14,7 +14,7 @@ import tempfile
 import zipfile
 
 from .asc import sanitized
-from .metadata import NeedsAction, ReleaseError, ROOT
+from .metadata import NeedsAction, ReleaseError, ROOT, identity as project_identity
 
 
 def run(args, env=None, timeout=120):
@@ -36,6 +36,73 @@ def require(name):
     if not os.environ.get(name):
         raise NeedsAction(f"Configure GitHub Secret {name}.")
     return os.environ[name]
+
+
+def required_secrets(platform, mode):
+    names = ["ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_PRIVATE_KEY_P8_BASE64"]
+    if mode == "review":
+        names += ["ASC_REVIEW_CONTACT_PHONE"]
+    if mode == "full":
+        prefix = "IOS" if platform == "ios" else "MAC_APP"
+        names += [prefix + "_DISTRIBUTION_P12_BASE64", prefix + "_DISTRIBUTION_P12_PASSWORD",
+                  "IOS_PROVISION_PROFILE_BASE64" if platform == "ios" else "MAC_PROVISION_PROFILE_BASE64"]
+        if platform == "macos":
+            names += ["MAC_INSTALLER_P12_BASE64", "MAC_INSTALLER_P12_PASSWORD"]
+    return names
+
+
+def preflight(platforms, mode, artifact_run_id=""):
+    missing = sorted({name for platform in platforms for name in required_secrets(platform, mode)
+                      if not os.environ.get(name)})
+    if mode == "upload" and not re.fullmatch(r"[0-9]+", artifact_run_id):
+        missing += ["numeric artifact_run_id for upload mode"]
+    if missing:
+        raise NeedsAction("Missing release configuration (checked together, before building): " + ", ".join(missing))
+    for name in {n for p in platforms for n in required_secrets(p, mode) if n.endswith("_BASE64")}:
+        try:
+            if not base64.b64decode(os.environ[name], validate=True):
+                raise ValueError()
+        except ValueError:
+            raise NeedsAction(f"{name} must be nonempty, single-line base64.") from None
+
+
+def validate_materials(platform):
+    """Fail on wrong profiles/certificates before Xcode/Metal/Ruby preparation."""
+    from cryptography.hazmat.primitives.serialization import pkcs12, Encoding
+    from cryptography.x509.oid import NameOID
+    ident = project_identity(platform)
+    prefix = "IOS" if platform == "ios" else "MAC_APP"
+    try:
+        key, cert, _ = pkcs12.load_key_and_certificates(base64.b64decode(require(prefix + "_DISTRIBUTION_P12_BASE64")),
+                                                      require(prefix + "_DISTRIBUTION_P12_PASSWORD").encode())
+        if not key or not cert or cert.not_valid_after_utc <= datetime.datetime.now(datetime.timezone.utc):
+            raise ValueError()
+        subject = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+        allowed = ("Apple Distribution:", "iPhone Distribution:") if platform == "ios" else ("Apple Distribution:", "3rd Party Mac Developer Application:")
+        if not subject.startswith(allowed) or not subject.endswith("(" + ident["teamId"] + ")"):
+            raise ValueError()
+    except (ValueError, IndexError):
+        raise NeedsAction(prefix + " distribution P12/password is invalid, expired, or not App Store signing material.") from None
+    specs = ["IOS_PROVISION_PROFILE_BASE64" if platform == "ios" else "MAC_PROVISION_PROFILE_BASE64"]
+    with tempfile.TemporaryDirectory(prefix="glintwake-profile-audit-") as temp:
+        for secret in specs:
+            path = decode_secret(secret, pathlib.Path(temp) / secret)
+            profile = plistlib.loads(run(["openssl", "cms", "-verify", "-noverify", "-inform", "DER", "-in", str(path)]).encode())
+            check_profile(profile, ident)
+            if cert.public_bytes(Encoding.DER) not in profile.get("DeveloperCertificates", []):
+                raise NeedsAction(secret + " does not include the imported distribution certificate.")
+    if platform == "macos":
+        try:
+            installer_key, installer, _ = pkcs12.load_key_and_certificates(base64.b64decode(require("MAC_INSTALLER_P12_BASE64")),
+                                                                          require("MAC_INSTALLER_P12_PASSWORD").encode())
+            name = installer.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value if installer else ""
+            if (not installer_key or not name.startswith("3rd Party Mac Developer Installer:") or
+                    not name.endswith("(" + ident["teamId"] + ")") or
+                    installer.not_valid_after_utc <= datetime.datetime.now(datetime.timezone.utc)):
+                raise ValueError()
+        except (ValueError, IndexError):
+            raise NeedsAction("Mac Installer P12/password must contain a valid Mac App Store installer certificate and key.") from None
+    print(platform + ": profiles, certificate matching, expiry and production capabilities validated.", flush=True)
 
 
 def decode_secret(name, path):
@@ -149,6 +216,11 @@ def verify_app(app, identity):
     run(["python3", "Scripts/verify-release.py", str(app)], timeout=180)
 
 
+def provenance():
+    return dict(repository=os.environ.get("GITHUB_REPOSITORY", "local"), sha=os.environ.get("GITHUB_SHA", run(["git", "rev-parse", "HEAD"]).strip()),
+                runId=os.environ.get("GITHUB_RUN_ID", "local"), workflow=".github/workflows/app-store-release.yml")
+
+
 def build(identity, state_dir):
     signing = setup(identity, state_dir)
     archive = state_dir / "Glintwake.xcarchive"
@@ -184,7 +256,7 @@ def build(identity, state_dir):
         run(["productbuild", "--component", str(app), "/Applications", "--sign", signing["installerIdentity"],
              "--keychain", str(signing["keychain"]), str(artifact)], timeout=300)
         run(["pkgutil", "--check-signature", str(artifact)])
-    manifest = dict(identity=identity, file=artifact.name, sha256=hashlib.sha256(artifact.read_bytes()).hexdigest())
+    manifest = dict(identity=identity, source=provenance(), file=artifact.name, sha256=hashlib.sha256(artifact.read_bytes()).hexdigest())
     (export / "artifact.json").write_text(json.dumps(manifest, indent=2) + "\n")
     # Keep only transport files and the identity manifest in the upload artifact.
     for path in export.iterdir():
@@ -203,6 +275,10 @@ def binary(state_dir, identity):
     manifest = json.loads((export / "artifact.json").read_text())
     if manifest["identity"] != identity or pathlib.Path(manifest["file"]).name != manifest["file"]:
         raise ReleaseError("Downloaded artifact identity differs from the requested release.")
+    source_path = state_dir / "artifact-source.json"
+    expected = json.loads(source_path.read_text()) if source_path.exists() else provenance()
+    if manifest.get("source") != expected:
+        raise ReleaseError("Artifact repository/run/commit SHA differs from the verified source run.")
     artifact = export / manifest["file"]
     if hashlib.sha256(artifact.read_bytes()).hexdigest() != manifest["sha256"]:
         raise ReleaseError("Downloaded artifact checksum mismatch.")

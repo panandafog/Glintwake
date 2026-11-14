@@ -53,6 +53,8 @@ The play screen does not scroll: the board fits the space remaining after contro
 with a side-by-side arrangement in wide windows. Instructions live in Help.
 The native Mac window starts at 420×640 and can shrink to 340×500 points.
 Only the help and difficulty picker sheets scroll.
+Help → **About the game** shows the installed version and build number, the author,
+and links to support and the privacy policy. Version details come from the app bundle.
 
 ## Audio
 
@@ -153,3 +155,7 @@ Regenerate the icon with:
 xcrun swift Scripts/render-icon.swift Assets/Assets.xcassets/AppIcon.appiconset
 ```
 
+CI runs solver/generator tests and unsigned native Release builds on dev pushes
+and pull requests. See [CI](Docs/CI.md). App Store delivery is split into manual
+[upload and review workflows](Docs/APP_STORE_RELEASE_AUTOMATION.md), with shared
+build selection, early signing audits and resumable platform reports.

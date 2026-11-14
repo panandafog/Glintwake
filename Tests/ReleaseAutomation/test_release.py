@@ -34,7 +34,7 @@ class FakeAPI:
         self.app = self.add(resource("apps", "app", {"bundleId": "com.panandafog.glintwake"}))
         for name in ("GAMES", "GAMES_PUZZLE"):
             self.add(resource("appCategories", name))
-        self.pre = self.add(resource("preReleaseVersions", "pre", {"version": "0.1.0", "platform": "IOS"}))
+        self.pre = self.add(resource("preReleaseVersions", "pre", {"version": identity("ios")["version"], "platform": "IOS"}))
         self.add(resource("builds", "build", {"version": identity("ios")["build"], "processingState": "VALID", "expired": False, "usesNonExemptEncryption": False},
                           {"app": ("apps", "app"), "preReleaseVersion": ("preReleaseVersions", "pre")}))
         self.add(resource("appInfos", "info", {"state": "PREPARE_FOR_SUBMISSION"}, {"app": ("apps", "app")}))
@@ -210,7 +210,9 @@ class StateTests(unittest.TestCase):
             self.store.ensure_version()
 
     def test_another_editable_version_is_not_repurposed(self):
-        self.api.create("appStoreVersions", {"versionString": "0.2.0", "platform": "IOS"}, {"app": ("apps", "app")})
+        # Keep this distinct from ASC's reusable initial 1.0/1.0.0 placeholders.
+        other_version = str(int(self.ident["version"].split(".")[0]) + 2) + ".0.0"
+        self.api.create("appStoreVersions", {"versionString": other_version, "platform": "IOS"}, {"app": ("apps", "app")})
         with self.assertRaises(NeedsAction):
             self.store.ensure_version()
 
@@ -222,7 +224,7 @@ class StateTests(unittest.TestCase):
         self.store.upsert_locale(initial, "appStoreVersionLocalizations", "appStoreVersionLocalizations", "en-US", {})
         version = self.store.ensure_version()
         self.assertEqual(version["id"], initial["id"])
-        self.assertEqual(version["attributes"]["versionString"], "0.1.0")
+        self.assertEqual(version["attributes"]["versionString"], self.ident["version"])
         self.assertEqual(version["attributes"]["releaseType"], "AFTER_APPROVAL")
         self.assertIn("REUSED_EMPTY_INITIAL_DRAFT", self.report["versionPreparation"])
         self.store.ensure_version()
@@ -239,7 +241,7 @@ class StateTests(unittest.TestCase):
     def test_initial_100_placeholder_is_supported(self):
         initial = self.initial_draft("1.0.0")
         self.assertEqual(self.store.ensure_version()["id"], initial["id"])
-        self.assertIn("1.0.0 -> 0.1.0", self.report["versionPreparation"])
+        self.assertIn("1.0.0 -> " + self.ident["version"], self.report["versionPreparation"])
 
     def test_unknown_build_relationship_does_not_mean_unbound(self):
         self.initial_draft()
@@ -260,14 +262,14 @@ class StateTests(unittest.TestCase):
 
     def test_mac_initial_draft_uses_only_matching_native_mac_build(self):
         initial = self.api.create("appStoreVersions", {"versionString": "1.0", "platform": "MAC_OS"}, {"app": ("apps", "app")})
-        self.api.add(resource("preReleaseVersions", "mac-pre", {"version": "0.1.0", "platform": "MAC_OS"}))
+        self.api.add(resource("preReleaseVersions", "mac-pre", {"version": identity("macos")["version"], "platform": "MAC_OS"}))
         self.api.add(resource("builds", "mac-build", {"version": identity("ios")["build"], "processingState": "VALID", "expired": False},
                               {"app": ("apps", "app"), "preReleaseVersion": ("preReleaseVersions", "mac-pre")}))
         mac = Store(self.api, identity("macos"), self.config, {})
         version = mac.ensure_version()
         self.assertEqual(version["id"], initial["id"])
         self.assertEqual(version["attributes"]["platform"], "MAC_OS")
-        self.assertEqual(version["attributes"]["versionString"], "0.1.0")
+        self.assertEqual(version["attributes"]["versionString"], identity("macos")["version"])
 
     def test_initial_draft_with_localized_content_is_preserved(self):
         initial = self.initial_draft()
@@ -359,19 +361,20 @@ class StateTests(unittest.TestCase):
 
     def test_upload_receipt_prevents_duplicate_before_build_is_visible(self):
         self.api.records.pop(("builds", "build"))
-        self.api.add(resource("buildUploads", "receipt", {"cfBundleShortVersionString": "0.1.0", "cfBundleVersion": self.ident["build"], "platform": "IOS", "state": {"state": "PROCESSING"}}, {"app": ("apps", "app")}))
+        self.api.add(resource("buildUploads", "receipt", {"cfBundleShortVersionString": self.ident["version"], "cfBundleVersion": self.ident["build"], "platform": "IOS", "state": {"state": "PROCESSING"}}, {"app": ("apps", "app")}))
         self.assertIsNone(self.store.find_build())
         self.assertEqual(self.store.find_upload()["id"], "receipt")
         self.assertIn("ALREADY_RECEIVED", self.report["upload"])
 
     def test_failed_upload_receipt_is_not_deleted_or_overwritten(self):
-        self.api.add(resource("buildUploads", "receipt", {"cfBundleShortVersionString": "0.1.0", "cfBundleVersion": self.ident["build"], "platform": "IOS", "state": {"state": "FAILED"}}, {"app": ("apps", "app")}))
+        self.api.add(resource("buildUploads", "receipt", {"cfBundleShortVersionString": self.ident["version"], "cfBundleVersion": self.ident["build"], "platform": "IOS", "state": {"state": "FAILED"}}, {"app": ("apps", "app")}))
         with self.assertRaises(NeedsAction):
             self.store.find_upload()
         self.assertFalse(any(m == "DELETE" for m, _ in self.api.calls))
 
     def test_receipt_of_another_version_is_ignored(self):
-        self.api.add(resource("buildUploads", "receipt", {"cfBundleShortVersionString": "0.2.0", "cfBundleVersion": self.ident["build"], "platform": "IOS", "state": {"state": "PROCESSING"}}, {"app": ("apps", "app")}))
+        other_version = str(int(self.ident["version"].split(".")[0]) + 1) + ".0.0"
+        self.api.add(resource("buildUploads", "receipt", {"cfBundleShortVersionString": other_version, "cfBundleVersion": self.ident["build"], "platform": "IOS", "state": {"state": "PROCESSING"}}, {"app": ("apps", "app")}))
         self.assertIsNone(self.store.find_upload())
 
     def test_bind_and_review_do_not_invent_phone_or_account(self):
@@ -799,6 +802,9 @@ class ConfigTests(unittest.TestCase):
             artifact = export / "Glintwake.ipa"; artifact.write_bytes(b"test artifact")
             import hashlib
             manifest = dict(identity=ident, file=artifact.name, sha256=hashlib.sha256(artifact.read_bytes()).hexdigest())
+            source = dict(repository="panandafog/Glintwake", sha="a" * 40, runId="123", workflow=".github/workflows/app-store-release.yml")
+            manifest["source"] = source
+            (root / "artifact-source.json").write_text(json.dumps(source))
             (export / "artifact.json").write_text(json.dumps(manifest))
             self.assertEqual(binary(root, ident), artifact)
             artifact.write_bytes(b"tampered")
@@ -807,10 +813,11 @@ class ConfigTests(unittest.TestCase):
 
     def test_artifact_provenance_rejects_prs_forks_and_wrong_workflows(self):
         valid = dict(repository={"full_name": "owner/repo"}, head_repository={"full_name": "owner/repo"},
-                     head_branch="master", event="workflow_dispatch", path=".github/workflows/app-store-release.yml", status="completed")
+                     head_branch="master", event="workflow_dispatch", path=".github/workflows/app-store-release.yml", status="completed", head_sha="a" * 40)
         validate_run(valid, "owner/repo", "master")
+        validate_run(valid | {"head_branch": "dev"}, "owner/repo", "master")
         for change in ({"event": "pull_request"}, {"head_branch": "feature"}, {"head_repository": {"full_name": "fork/repo"}},
-                       {"path": ".github/workflows/other.yml"}, {"status": "in_progress"}):
+                       {"path": ".github/workflows/other.yml"}, {"status": "in_progress"}, {"head_sha": "invalid"}):
             with self.subTest(change=change), self.assertRaises(ReleaseError):
                 validate_run(valid | change, "owner/repo", "master")
 

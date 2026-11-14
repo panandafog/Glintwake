@@ -9,7 +9,7 @@ iOS и Mac в `READY_FOR_REVIEW`: [результат](https://github.com/panand
 Ни одна версия не отправлена на ревью. Ручной список ниже сохранён как справочный;
 подготовку archive/upload/metadata/screenshots уже выполнил workflow. Duo API upload
 остаётся исключением, описанным в инструкции автоматизации.
-Версия исходников: **0.1.0 (5)**. Один app target: iOS/iPadOS 17+ и native macOS 14+.
+Версия исходников: **0.2.0 (6)**. Один app target: iOS/iPadOS 17+ и native macOS 14+.
 Локальные проверки выполнялись Xcode 27.2 (27B52). Базовая подготовка и build 4 —
 коммит `13d952b`; последующая подготовка Duo описана ниже.
 
