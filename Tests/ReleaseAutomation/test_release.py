@@ -210,7 +210,8 @@ class StateTests(unittest.TestCase):
             self.store.ensure_version()
 
     def test_another_editable_version_is_not_repurposed(self):
-        other_version = str(int(self.ident["version"].split(".")[0]) + 1) + ".0.0"
+        # Keep this distinct from ASC's reusable initial 1.0/1.0.0 placeholders.
+        other_version = str(int(self.ident["version"].split(".")[0]) + 2) + ".0.0"
         self.api.create("appStoreVersions", {"versionString": other_version, "platform": "IOS"}, {"app": ("apps", "app")})
         with self.assertRaises(NeedsAction):
             self.store.ensure_version()
