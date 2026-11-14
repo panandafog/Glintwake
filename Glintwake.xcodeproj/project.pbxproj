@@ -23,6 +23,7 @@
 		6B499DE18EF6CE558A8F3386 /* PrivacyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 024E756FC8CB72790738D400 /* PrivacyView.swift */; };
 		83EBA7E5D6AB34FA2F756E92 /* StoreScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ABEF643D33AD48E3929AA48 /* StoreScreenshots.swift */; };
 		8D5898EC823E587B96C07BA8 /* Attempt.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1264538B6426B6803E1EC90 /* Attempt.swift */; };
+		8DD57BC5BE2F5C0EBA855015 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CD0EFABADB507710F810ABC /* AboutView.swift */; };
 		A808ADFD75FDD0E64DEE1078 /* AudioController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD83C65002BBF544F7D625D7 /* AudioController.swift */; };
 		B6774B70E27B60022B938183 /* ScreenshotSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F1EA671855EE804B327FF70 /* ScreenshotSupport.swift */; };
 		D23A805DD47944484E8AB6A6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 46C5AF0857B577E7BA29E4C7 /* Assets.xcassets */; };
@@ -54,6 +55,7 @@
 		024E756FC8CB72790738D400 /* PrivacyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyView.swift; sourceTree = "<group>"; };
 		109825C5057FEA1627BDC8CD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		29FB5BCFA966DE4E2C1E7A05 /* BoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardView.swift; sourceTree = "<group>"; };
+		2CD0EFABADB507710F810ABC /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		375F08F4D42DCDFD81B9A4E6 /* GameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStore.swift; sourceTree = "<group>"; };
 		4325FF7E657EB15301E549DB /* slide.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = slide.wav; sourceTree = "<group>"; };
 		46C5AF0857B577E7BA29E4C7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -112,6 +114,7 @@
 		17C03404A716D05FDA9D03BF /* App */ = {
 			isa = PBXGroup;
 			children = (
+				2CD0EFABADB507710F810ABC /* AboutView.swift */,
 				AD83C65002BBF544F7D625D7 /* AudioController.swift */,
 				29FB5BCFA966DE4E2C1E7A05 /* BoardView.swift */,
 				B7C3B88014377046578EB0DC /* ContentView.swift */,
@@ -316,6 +319,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8DD57BC5BE2F5C0EBA855015 /* AboutView.swift in Sources */,
 				8D5898EC823E587B96C07BA8 /* Attempt.swift in Sources */,
 				A808ADFD75FDD0E64DEE1078 /* AudioController.swift in Sources */,
 				4C68BA0AC95F7D907B2AB875 /* BoardView.swift in Sources */,
@@ -399,7 +403,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = Config/Glintwake.macOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphone*]" = YES;
@@ -426,7 +430,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = Config/Glintwake.macOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphone*]" = YES;
@@ -504,7 +508,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 3HG9ZBM8AV;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -529,7 +533,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.puzzle-games";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -593,7 +597,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 3HG9ZBM8AV;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -612,7 +616,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.puzzle-games";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

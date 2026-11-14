@@ -1,0 +1,1 @@
+Added an About the game screen with the app version, build number, and links to support and the privacy policy. Find it in How to play.

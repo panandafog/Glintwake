@@ -53,6 +53,8 @@ The play screen does not scroll: the board fits the space remaining after contro
 with a side-by-side arrangement in wide windows. Instructions live in Help.
 The native Mac window starts at 420×640 and can shrink to 340×500 points.
 Only the help and difficulty picker sheets scroll.
+Help → **About the game** shows the installed version and build number, the author,
+and links to support and the privacy policy. Version details come from the app bundle.
 
 ## Audio
 

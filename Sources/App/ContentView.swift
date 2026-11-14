@@ -267,6 +267,9 @@ struct ContentView: View {
                     helpRow("burst.fill", "Help.Hazards.Title".localized, "Help.Hazards.Body".localized, Palette.coral)
                     Text("Help.Par.Body".localized)
                         .font(.system(size: 13)).foregroundStyle(Palette.secondary)
+                    NavigationLink { AboutView() } label: {
+                        Label("About.Title".localized, systemImage: "info.circle")
+                    }.buttonStyle(SoftButton()).accessibilityIdentifier("about")
                     NavigationLink { PrivacyView() } label: {
                         Label("Privacy.Title".localized, systemImage: "hand.raised")
                     }.buttonStyle(SoftButton()).accessibilityIdentifier("privacy")
